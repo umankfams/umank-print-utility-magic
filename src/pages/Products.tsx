@@ -42,6 +42,7 @@ import { Plus, TrashIcon, EditIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { formatCurrency } from "@/lib/utils";
 
 const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -431,13 +432,13 @@ const Products = () => {
                   <div className="flex justify-between">
                     <span>Cost Price:</span>
                     <span className="font-medium">
-                      ${product.costPrice.toFixed(2)}
+                      {formatCurrency(product.costPrice)}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Selling Price:</span>
                     <span className="font-medium">
-                      ${product.sellingPrice.toFixed(2)}
+                      {formatCurrency(product.sellingPrice)}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -498,10 +499,10 @@ const Products = () => {
                                 <TableCell>{item.quantity}</TableCell>
                                 <TableCell>{item.ingredient?.unit}</TableCell>
                                 <TableCell>
-                                  ${(
+                                  {formatCurrency(
                                     (item.ingredient?.pricePerUnit || 0) *
                                     item.quantity
-                                  ).toFixed(2)}
+                                  )}
                                 </TableCell>
                                 <TableCell>
                                   <Button
