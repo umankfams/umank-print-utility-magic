@@ -136,7 +136,6 @@ const Products = () => {
       createProduct({
         name: values.name,
         description: values.description,
-        costPrice: values.costPrice || 0,
         sellingPrice: values.sellingPrice || 0,
         stock: values.stock || 0,
         minOrder: values.minOrder || 1,
