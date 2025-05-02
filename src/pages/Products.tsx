@@ -136,6 +136,7 @@ const Products = () => {
       createProduct({
         name: values.name,
         description: values.description,
+        costPrice: 0, // Add this line to provide the required costPrice property
         sellingPrice: values.sellingPrice || 0,
         stock: values.stock || 0,
         minOrder: values.minOrder || 1,
