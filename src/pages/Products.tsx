@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Card,
@@ -38,7 +37,7 @@ import { Button } from "@/components/ui/button";
 import AppNavbar from "@/components/AppNavbar";
 import { useProducts } from "@/hooks/useProducts";
 import { useIngredients } from "@/hooks/useIngredients";
-import { Product, Ingredient } from "@/types";
+import { Product, Ingredient, TaskPriority } from "@/types";
 import { Plus, TrashIcon, EditIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -135,8 +134,12 @@ const Products = () => {
       });
     } else {
       createProduct({
-        ...values,
-        costPrice: 0, // Will be calculated when ingredients are added
+        name: values.name,
+        description: values.description,
+        costPrice: values.costPrice || 0,
+        sellingPrice: values.sellingPrice || 0,
+        stock: values.stock || 0,
+        minOrder: values.minOrder || 1,
       });
     }
     setOpenDialog(false);
@@ -165,7 +168,11 @@ const Products = () => {
   const onSubmitTask = (values: TaskFormValues) => {
     if (selectedProduct) {
       createTaskTemplate({
-        ...values,
+        title: values.title,
+        description: values.description,
+        priority: values.priority as TaskPriority,
+        isSubtask: values.isSubtask,
+        parentTemplateId: values.parentTemplateId,
         ingredientId: undefined,
         productId: selectedProduct.id,
       });

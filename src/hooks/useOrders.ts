@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Order, OrderItem, Task, TaskTemplate } from "@/types";
+import { Order, OrderItem, Task, TaskTemplate, OrderStatus, TaskStatus } from "@/types";
 import { toast } from "@/hooks/use-toast";
 
 export function useOrders() {
@@ -25,7 +25,7 @@ export function useOrders() {
       orderDate: new Date(item.order_date),
       deliveryDate: item.delivery_date ? new Date(item.delivery_date) : undefined,
       totalAmount: Number(item.total_amount),
-      status: item.status,
+      status: item.status as OrderStatus,
       notes: item.notes,
       createdAt: new Date(item.created_at),
       updatedAt: new Date(item.updated_at)
@@ -102,7 +102,7 @@ export function useOrders() {
       orderDate: new Date(orderData.order_date),
       deliveryDate: orderData.delivery_date ? new Date(orderData.delivery_date) : undefined,
       totalAmount: Number(orderData.total_amount),
-      status: orderData.status,
+      status: orderData.status as OrderStatus,
       notes: orderData.notes,
       createdAt: new Date(orderData.created_at),
       updatedAt: new Date(orderData.updated_at),
@@ -139,7 +139,7 @@ export function useOrders() {
       orderDate: new Date(data.order_date),
       deliveryDate: data.delivery_date ? new Date(data.delivery_date) : undefined,
       totalAmount: Number(data.total_amount),
-      status: data.status,
+      status: data.status as OrderStatus,
       notes: data.notes,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at)
@@ -202,7 +202,7 @@ export function useOrders() {
       orderDate: new Date(data.order_date),
       deliveryDate: data.delivery_date ? new Date(data.delivery_date) : undefined,
       totalAmount: Number(data.total_amount),
-      status: data.status,
+      status: data.status as OrderStatus,
       notes: data.notes,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at)

@@ -36,11 +36,13 @@ export interface Ingredient {
   tasks?: TaskTemplate[];
 }
 
+export type TaskPriority = 'low' | 'medium' | 'high';
+
 export interface TaskTemplate {
   id: string;
   title: string;
   description?: string;
-  priority?: 'low' | 'medium' | 'high';
+  priority?: TaskPriority;
   ingredientId?: string;
   productId?: string;
   isSubtask: boolean;
@@ -49,17 +51,20 @@ export interface TaskTemplate {
   updatedAt: Date;
 }
 
+export type TaskStatus = 'todo' | 'in-progress' | 'completed' | 'cancelled';
+export type TaskType = 'manual' | 'automatic';
+
 export interface Task {
   id: string;
   title: string;
   description?: string;
-  status: 'todo' | 'in-progress' | 'completed' | 'cancelled';
-  priority?: 'low' | 'medium' | 'high';
+  status: TaskStatus;
+  priority?: TaskPriority;
   parentTaskId?: string;
   orderId?: string;
   ingredientId?: string;
   productId?: string;
-  taskType?: 'manual' | 'automatic';
+  taskType?: TaskType;
   deadline?: Date;
   assigneeId?: string;
   createdAt: Date;

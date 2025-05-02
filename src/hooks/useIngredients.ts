@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Ingredient, TaskTemplate } from "@/types";
+import { Ingredient, TaskTemplate, TaskPriority } from "@/types";
 import { toast } from "@/hooks/use-toast";
 
 export function useIngredients() {
@@ -61,7 +61,7 @@ export function useIngredients() {
       id: task.id,
       title: task.title,
       description: task.description,
-      priority: task.priority,
+      priority: task.priority as TaskPriority | undefined,
       ingredientId: task.ingredient_id,
       productId: task.product_id,
       isSubtask: task.is_subtask || false,
@@ -215,7 +215,7 @@ export function useIngredients() {
       id: data.id,
       title: data.title,
       description: data.description,
-      priority: data.priority,
+      priority: data.priority as TaskPriority | undefined,
       ingredientId: data.ingredient_id,
       productId: data.product_id,
       isSubtask: data.is_subtask || false,
