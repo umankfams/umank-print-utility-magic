@@ -72,15 +72,33 @@ export function useProducts() {
       throw new Error(ingredientsError.message);
     }
 
-    // Fetch associated tasks
-    const { data: taskData, error: taskError } = await supabase
+    // Fetch associated product tasks
+    const { data: productTaskData, error: productTaskError } = await supabase
       .from("task_templates")
       .select("*")
       .eq("product_id", id);
 
-    if (taskError) {
-      console.error("Error fetching tasks:", taskError);
-      throw new Error(taskError.message);
+    if (productTaskError) {
+      console.error("Error fetching product tasks:", productTaskError);
+      throw new Error(productTaskError.message);
+    }
+
+    // Fetch ingredient task templates for all ingredients in this product
+    const ingredientIds = ingredientsData.map(item => item.ingredient_id);
+    let ingredientTasks: any[] = [];
+    
+    if (ingredientIds.length > 0) {
+      const { data: ingredientTaskData, error: ingredientTaskError } = await supabase
+        .from("task_templates")
+        .select("*")
+        .in("ingredient_id", ingredientIds);
+
+      if (ingredientTaskError) {
+        console.error("Error fetching ingredient tasks:", ingredientTaskError);
+        throw new Error(ingredientTaskError.message);
+      }
+
+      ingredientTasks = ingredientTaskData || [];
     }
 
     // Convert ingredients data
@@ -103,8 +121,9 @@ export function useProducts() {
       } : undefined
     }));
 
-    // Convert task data
-    const tasks: TaskTemplate[] = taskData.map(task => ({
+    // Convert task data - combining product tasks and ingredient tasks
+    const allTaskTemplates = [...productTaskData, ...ingredientTasks];
+    const tasks: TaskTemplate[] = allTaskTemplates.map(task => ({
       id: task.id,
       title: task.title,
       description: task.description,

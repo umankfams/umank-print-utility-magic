@@ -27,8 +27,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Trash as TrashIcon, Plus } from "lucide-react";
+import { Trash as TrashIcon, Plus, ChefHat } from "lucide-react";
 import { Product, TaskTemplate } from "@/types";
+import { Badge } from "@/components/ui/badge";
 
 const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -75,6 +76,10 @@ export const TaskDialog = ({
 
   const isSubtask = form.watch("isSubtask");
   const mainTasks = tasks.filter(t => !t.isSubtask);
+  
+  // Separate tasks by source (ingredient vs product)
+  const productTasks = tasks.filter(t => t.productId === product.id);
+  const ingredientTasks = tasks.filter(t => t.ingredientId && !t.productId);
 
   return (
     <DialogContent className="max-w-[800px] w-full">
@@ -87,6 +92,7 @@ export const TaskDialog = ({
         )}
       </DialogHeader>
       <div className="space-y-4">
+        {/* Product Tasks Section */}
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-medium">Product Tasks</h3>
           {!readonly && onAddTask && (
@@ -100,7 +106,7 @@ export const TaskDialog = ({
           )}
         </div>
 
-        {tasks.length ? (
+        {productTasks.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
@@ -114,7 +120,7 @@ export const TaskDialog = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tasks.map((task) => (
+              {productTasks.map((task) => (
                 <TableRow key={task.id}>
                   <TableCell>{task.title}</TableCell>
                   <TableCell>{task.description || "-"}</TableCell>
@@ -151,9 +157,67 @@ export const TaskDialog = ({
           </Table>
         ) : (
           <p className="text-muted-foreground">
-            No tasks defined for this product.
+            No product-specific tasks defined.
           </p>
         )}
+
+        {/* Ingredient Tasks Section */}
+        <div className="mt-8 pt-4 border-t">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium flex items-center">
+              <ChefHat className="h-5 w-5 mr-2 text-amber-600" />
+              Ingredient Tasks
+              <Badge variant="outline" className="ml-2">
+                Inherited
+              </Badge>
+            </h3>
+          </div>
+
+          {ingredientTasks.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Source</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {ingredientTasks.map((task) => (
+                  <TableRow key={task.id}>
+                    <TableCell>{task.title}</TableCell>
+                    <TableCell>{task.description || "-"}</TableCell>
+                    <TableCell>
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          task.priority === "high"
+                            ? "bg-red-100 text-red-800"
+                            : task.priority === "medium"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
+                      >
+                        {task.priority}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {task.isSubtask ? "Subtask" : "Main Task"}
+                    </TableCell>
+                    <TableCell>
+                      {product.ingredients?.find(i => i.ingredientId === task.ingredientId)?.ingredient?.name || "Unknown"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="text-muted-foreground">
+              No tasks inherited from ingredients.
+            </p>
+          )}
+        </div>
 
         {!readonly && onAddTask && (
           <Form {...form}>
