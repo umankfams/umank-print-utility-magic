@@ -18,7 +18,7 @@ interface ProductCardProps {
   product: Product;
   onEdit: (product: Product) => void;
   onDelete: (id: string) => void;
-  onViewIngredients: (product: Product) => void;
+  onViewIngredients: (product: Product) => void; // Kept for backward compatibility
   onViewTasks: (product: Product) => void;
 }
 
@@ -91,27 +91,16 @@ export const ProductCard = ({
           </div>
         </div>
       </CardContent>
-      <CardFooter className="pt-2 flex gap-2">
+      <CardFooter className="pt-2">
         <Dialog>
           <DialogTrigger asChild>
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => onViewIngredients(product)}
-            >
-              Ingredients
-            </Button>
-          </DialogTrigger>
-        </Dialog>
-
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="sm"
+              className="w-full"
               onClick={() => onViewTasks(product)}
             >
-              Tasks
+              View Tasks
             </Button>
           </DialogTrigger>
         </Dialog>

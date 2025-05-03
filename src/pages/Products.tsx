@@ -1,9 +1,7 @@
-
 import { useState } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import AppNavbar from "@/components/AppNavbar";
 import { useProducts } from "@/hooks/useProducts";
@@ -11,13 +9,11 @@ import { useIngredients } from "@/hooks/useIngredients";
 import { Product, TaskPriority } from "@/types";
 import { calculateSellingPrice } from "@/lib/utils";
 import { ProductList } from "@/components/products/ProductList";
-import { ProductForm } from "@/components/products/ProductForm";
-import { IngredientDialog } from "@/components/products/IngredientDialog";
+import { IntegratedProductForm } from "@/components/products/IntegratedProductForm";
 import { TaskDialog } from "@/components/products/TaskDialog";
 
 const Products = () => {
-  const [openDialog, setOpenDialog] = useState(false);
-  const [openIngredientDialog, setOpenIngredientDialog] = useState(false);
+  const [openProductDialog, setOpenProductDialog] = useState(false);
   const [openTaskDialog, setOpenTaskDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -45,7 +41,7 @@ const Products = () => {
   const handleAddProduct = () => {
     setIsEditing(false);
     setSelectedProduct(null);
-    setOpenDialog(true);
+    setOpenProductDialog(true);
   };
 
   const handleSubmit = (values: any) => {
@@ -74,24 +70,19 @@ const Products = () => {
         minOrder: values.minOrder || 1,
       });
     }
-    setOpenDialog(false);
+    setOpenProductDialog(false);
   };
 
   const handleEdit = (product: Product) => {
     setSelectedProduct(product);
     setIsEditing(true);
-    setOpenDialog(true);
+    setOpenProductDialog(true);
   };
 
   const handleDelete = (id: string) => {
     if (confirm("Are you sure you want to delete this product?")) {
       deleteProduct(id);
     }
-  };
-
-  const handleViewIngredients = (product: Product) => {
-    setSelectedProduct(product);
-    setOpenIngredientDialog(true);
   };
 
   const handleAddIngredient = (values: any) => {
@@ -126,7 +117,6 @@ const Products = () => {
         }
       }
     }
-    setOpenIngredientDialog(false);
   };
 
   const handleRemoveIngredient = (id: string, productId: string) => {
@@ -195,35 +185,30 @@ const Products = () => {
           onAddNew={handleAddProduct} 
           onEdit={handleEdit}
           onDelete={handleDelete}
-          onViewIngredients={handleViewIngredients}
+          onViewIngredients={() => {}} // No longer needed, but keep for interface compatibility
           onViewTasks={handleViewTasks}
         />
 
-        {/* Add/Edit Product Dialog */}
-        <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-          <DialogContent className="sm:max-w-[500px]">
-            <ProductForm 
-              isEditing={isEditing}
-              selectedProduct={selectedProduct}
-              onSubmit={handleSubmit}
-            />
+        {/* Integrated Product Form Dialog */}
+        <Dialog open={openProductDialog} onOpenChange={setOpenProductDialog}>
+          <DialogContent className="sm:max-w-[700px]">
+            {selectedProduct || !isEditing ? (
+              <IntegratedProductForm
+                isEditing={isEditing}
+                selectedProduct={selectedProduct}
+                ingredients={ingredients}
+                productIngredients={productWithDetails?.ingredients || []}
+                onSubmit={handleSubmit}
+                onAddIngredient={handleAddIngredient}
+                onRemoveIngredient={handleRemoveIngredient}
+              />
+            ) : (
+              <p>Loading product details...</p>
+            )}
           </DialogContent>
         </Dialog>
 
-        {/* Ingredient Dialog */}
-        <Dialog open={openIngredientDialog} onOpenChange={setOpenIngredientDialog}>
-          {selectedProduct && productWithDetails && (
-            <IngredientDialog
-              product={selectedProduct}
-              ingredients={ingredients}
-              productIngredients={productWithDetails.ingredients || []}
-              onAddIngredient={handleAddIngredient}
-              onRemoveIngredient={handleRemoveIngredient}
-            />
-          )}
-        </Dialog>
-
-        {/* Task Dialog */}
+        {/* Task Dialog - keep separate for now */}
         <Dialog open={openTaskDialog} onOpenChange={setOpenTaskDialog}>
           {selectedProduct && productWithDetails && (
             <TaskDialog

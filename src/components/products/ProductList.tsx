@@ -10,7 +10,7 @@ interface ProductListProps {
   onAddNew: () => void;
   onEdit: (product: Product) => void;
   onDelete: (id: string) => void;
-  onViewIngredients: (product: Product) => void;
+  onViewIngredients: (product: Product) => void; // Kept for backward compatibility
   onViewTasks: (product: Product) => void;
 }
 
