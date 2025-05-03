@@ -43,13 +43,15 @@ type TaskFormValues = z.infer<typeof taskSchema>;
 interface TaskDialogProps {
   product: Product;
   tasks: TaskTemplate[];
-  onAddTask: (values: TaskFormValues) => void;
-  onDeleteTask: (taskId: string) => void;
+  readonly?: boolean;
+  onAddTask?: (values: TaskFormValues) => void;
+  onDeleteTask?: (taskId: string) => void;
 }
 
 export const TaskDialog = ({
   product,
   tasks,
+  readonly = false,
   onAddTask,
   onDeleteTask,
 }: TaskDialogProps) => {
@@ -65,8 +67,10 @@ export const TaskDialog = ({
   });
 
   const onSubmit = (values: TaskFormValues) => {
-    onAddTask(values);
-    form.reset();
+    if (onAddTask) {
+      onAddTask(values);
+      form.reset();
+    }
   };
 
   const isSubtask = form.watch("isSubtask");
@@ -76,17 +80,24 @@ export const TaskDialog = ({
     <DialogContent className="max-w-[800px] w-full">
       <DialogHeader>
         <DialogTitle>Tasks for {product.name}</DialogTitle>
+        {readonly && (
+          <DialogDescription>
+            These tasks are inherited from the product's ingredients
+          </DialogDescription>
+        )}
       </DialogHeader>
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-medium">Product Tasks</h3>
-          <Button
-            size="sm"
-            onClick={() => form.reset()}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Task
-          </Button>
+          {!readonly && onAddTask && (
+            <Button
+              size="sm"
+              onClick={() => form.reset()}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Task
+            </Button>
+          )}
         </div>
 
         {tasks.length ? (
@@ -97,7 +108,9 @@ export const TaskDialog = ({
                 <TableHead>Description</TableHead>
                 <TableHead>Priority</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
+                {!readonly && onDeleteTask && (
+                  <TableHead className="w-[100px]">Actions</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -121,15 +134,17 @@ export const TaskDialog = ({
                   <TableCell>
                     {task.isSubtask ? "Subtask" : "Main Task"}
                   </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onDeleteTask(task.id)}
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+                  {!readonly && onDeleteTask && (
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onDeleteTask(task.id)}
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
@@ -140,113 +155,115 @@ export const TaskDialog = ({
           </p>
         )}
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Task Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter task title" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter task description (optional)" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="priority"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Priority</FormLabel>
-                  <FormControl>
-                    <select
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                      {...field}
-                    >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                    </select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="isSubtask"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <input
-                      type="checkbox"
-                      checked={field.value}
-                      onChange={field.onChange}
-                      className="h-4 w-4 mt-1"
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
-                      This is a subtask
-                    </FormLabel>
-                    <p className="text-sm text-muted-foreground">
-                      Check this if this task is a subtask of another task
-                    </p>
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            {isSubtask && mainTasks.length > 0 && (
+        {!readonly && onAddTask && (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="parentTemplateId"
+                name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Parent Task</FormLabel>
+                    <FormLabel>Task Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter task title" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter task description (optional)" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Priority</FormLabel>
                     <FormControl>
                       <select
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                         {...field}
                       >
-                        <option value="">Select parent task</option>
-                        {mainTasks.map((task) => (
-                          <option key={task.id} value={task.id}>
-                            {task.title}
-                          </option>
-                        ))}
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
                       </select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            )}
 
-            <DialogFooter>
-              <Button type="submit">Create Task</Button>
-            </DialogFooter>
-          </form>
-        </Form>
+              <FormField
+                control={form.control}
+                name="isSubtask"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={field.onChange}
+                        className="h-4 w-4 mt-1"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        This is a subtask
+                      </FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Check this if this task is a subtask of another task
+                      </p>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              {isSubtask && mainTasks.length > 0 && (
+                <FormField
+                  control={form.control}
+                  name="parentTemplateId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Parent Task</FormLabel>
+                      <FormControl>
+                        <select
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                          {...field}
+                        >
+                          <option value="">Select parent task</option>
+                          {mainTasks.map((task) => (
+                            <option key={task.id} value={task.id}>
+                              {task.title}
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              <DialogFooter>
+                <Button type="submit">Create Task</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        )}
       </div>
     </DialogContent>
   );
