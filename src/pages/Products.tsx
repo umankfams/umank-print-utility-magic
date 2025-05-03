@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -34,21 +34,22 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import AppNavbar from "@/components/AppNavbar";
 import { useProducts } from "@/hooks/useProducts";
 import { useIngredients } from "@/hooks/useIngredients";
-import { Product, Ingredient, TaskPriority } from "@/types";
+import { Product, Ingredient, TaskPriority, TaskTemplate } from "@/types";
 import { Plus, TrashIcon, EditIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, calculateSellingPrice } from "@/lib/utils";
 
 const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
   // Cost price is calculated automatically
-  sellingPrice: z.number().min(0, "Price cannot be negative"),
+  markupPercentage: z.number().min(0, "Markup cannot be negative").max(300, "Markup cannot exceed 300%"),
   stock: z.number().min(0, "Stock cannot be negative"),
   minOrder: z.number().min(1, "Minimum order must be at least 1"),
 });
@@ -76,6 +77,9 @@ const Products = () => {
   const [openTaskDialog, setOpenTaskDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [markupPercentage, setMarkupPercentage] = useState(30);
+  const [currentCostPrice, setCurrentCostPrice] = useState(0);
+  const [calculatedSellingPrice, setCalculatedSellingPrice] = useState(0);
   
   const {
     products,
@@ -100,11 +104,29 @@ const Products = () => {
     defaultValues: {
       name: "",
       description: "",
-      sellingPrice: 0,
+      markupPercentage: 30,
       stock: 0,
       minOrder: 1,
     },
   });
+
+  // Watch markup percentage changes from the form
+  const watchMarkupPercentage = form.watch("markupPercentage");
+
+  // Update calculated selling price when markup percentage or cost price changes
+  useEffect(() => {
+    if (isEditing && selectedProduct) {
+      const sellingPrice = calculateSellingPrice(
+        selectedProduct.costPrice, 
+        watchMarkupPercentage || markupPercentage
+      );
+      setCalculatedSellingPrice(sellingPrice);
+    } else {
+      setCalculatedSellingPrice(
+        calculateSellingPrice(currentCostPrice, watchMarkupPercentage || markupPercentage)
+      );
+    }
+  }, [watchMarkupPercentage, markupPercentage, currentCostPrice, selectedProduct, isEditing]);
 
   const ingredientForm = useForm<IngredientFormValues>({
     resolver: zodResolver(ingredientSchema),
@@ -128,17 +150,27 @@ const Products = () => {
   const { data: productWithDetails } = getProductWithDetails(selectedProduct?.id || "");
 
   const onSubmit = (values: ProductFormValues) => {
+    const effectiveSellingPrice = calculateSellingPrice(
+      isEditing && selectedProduct ? selectedProduct.costPrice : 0,
+      values.markupPercentage
+    );
+    
     if (isEditing && selectedProduct) {
       updateProduct({
         id: selectedProduct.id,
-        ...values,
+        name: values.name,
+        description: values.description,
+        costPrice: selectedProduct.costPrice, // Keep the cost price from server
+        sellingPrice: effectiveSellingPrice,
+        stock: values.stock || 0,
+        minOrder: values.minOrder || 1,
       });
     } else {
       createProduct({
         name: values.name,
         description: values.description,
-        costPrice: 0, // Add this line to provide the required costPrice property
-        sellingPrice: values.sellingPrice || 0,
+        costPrice: 0, // Cost price will be calculated on the server
+        sellingPrice: effectiveSellingPrice,
         stock: values.stock || 0,
         minOrder: values.minOrder || 1,
       });
@@ -149,17 +181,34 @@ const Products = () => {
 
   const onSubmitIngredient = (values: IngredientFormValues) => {
     if (selectedProduct) {
-      // Find the selected ingredient to get its unit price
+      // Find the selected ingredient to get its unit price and tasks
       const selectedIngredient = ingredients.find(
         (i) => i.id === values.ingredientId
       );
 
       if (selectedIngredient) {
+        // Add the ingredient to the product
         addIngredient({
           productId: selectedProduct.id,
           ingredientId: values.ingredientId,
           quantity: values.quantity,
         });
+        
+        // Check if the ingredient has associated tasks and inherit them
+        if (selectedIngredient.tasks && selectedIngredient.tasks.length > 0) {
+          // Create similar tasks for the product
+          selectedIngredient.tasks.forEach(task => {
+            createTaskTemplate({
+              title: `${task.title} (from ${selectedIngredient.name})`,
+              description: task.description,
+              priority: task.priority as TaskPriority,
+              isSubtask: task.isSubtask,
+              parentTemplateId: task.parentTemplateId,
+              ingredientId: task.ingredientId,
+              productId: selectedProduct.id,
+            });
+          });
+        }
       }
     }
     setOpenIngredientDialog(false);
@@ -192,10 +241,18 @@ const Products = () => {
     setSelectedProduct(product);
     setIsEditing(true);
     
+    // Calculate markup percentage from existing cost and selling prices
+    const calculatedMarkup = product.costPrice > 0 
+      ? Math.round(((product.sellingPrice - product.costPrice) / product.costPrice) * 100)
+      : 30; // Default to 30% if cost price is 0
+    
+    setMarkupPercentage(calculatedMarkup);
+    setCurrentCostPrice(product.costPrice);
+    
     form.reset({
       name: product.name,
       description: product.description || "",
-      sellingPrice: product.sellingPrice,
+      markupPercentage: calculatedMarkup,
       stock: product.stock,
       minOrder: product.minOrder,
     });
@@ -363,27 +420,41 @@ const Products = () => {
                     />
                   </div>
 
+                  {isEditing && selectedProduct && (
+                    <div className="mb-4">
+                      <FormLabel>Cost Price</FormLabel>
+                      <p className="text-md font-medium">
+                        {formatCurrency(selectedProduct.costPrice)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Cost price is calculated from ingredients
+                      </p>
+                    </div>
+                  )}
+
                   <FormField
                     control={form.control}
-                    name="sellingPrice"
+                    name="markupPercentage"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Selling Price</FormLabel>
+                        <FormLabel>Markup Percentage: {field.value}%</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="0.00"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value === ""
-                                  ? 0
-                                  : parseFloat(e.target.value)
-                              )
-                            }
-                          />
+                          <div className="space-y-2">
+                            <Slider
+                              defaultValue={[field.value]}
+                              min={0}
+                              max={300}
+                              step={1}
+                              onValueChange={(value) => field.onChange(value[0])}
+                            />
+                          </div>
                         </FormControl>
+                        <div className="flex justify-between items-center mt-2">
+                          <span className="text-sm text-muted-foreground">Selling Price:</span>
+                          <span className="text-md font-medium">
+                            {formatCurrency(calculatedSellingPrice)}
+                          </span>
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -439,6 +510,14 @@ const Products = () => {
                     <span>Selling Price:</span>
                     <span className="font-medium">
                       {formatCurrency(product.sellingPrice)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Markup:</span>
+                    <span className="font-medium">
+                      {product.costPrice > 0 
+                        ? Math.round(((product.sellingPrice - product.costPrice) / product.costPrice) * 100)
+                        : 0}%
                     </span>
                   </div>
                   <div className="flex justify-between">

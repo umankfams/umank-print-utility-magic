@@ -13,3 +13,13 @@ export const formatCurrency = (amount: number): string => {
     minimumFractionDigits: 0,
   }).format(amount);
 };
+
+/**
+ * Calculate selling price based on cost price and markup percentage
+ * @param costPrice - The cost price of the product
+ * @param markupPercentage - The percentage markup to apply (1-100)
+ */
+export const calculateSellingPrice = (costPrice: number, markupPercentage: number): number => {
+  const markup = (markupPercentage / 100) * costPrice;
+  return costPrice + markup;
+};
