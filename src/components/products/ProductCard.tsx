@@ -13,6 +13,7 @@ import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { Edit as EditIcon, Trash as TrashIcon } from "lucide-react";
 import { Product } from "@/types";
 import { formatCurrency } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ProductCardProps {
   product: Product;
@@ -35,20 +36,39 @@ export const ProductCard = ({
         <CardTitle className="text-lg flex justify-between items-start">
           <span>{product.name}</span>
           <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onEdit(product)}
-            >
-              <EditIcon className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDelete(product.id)}
-            >
-              <TrashIcon className="h-4 w-4" />
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEdit(product)}
+                  >
+                    <EditIcon className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Edit product</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDelete(product.id)}
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Delete product</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </CardTitle>
         <CardDescription>
@@ -92,18 +112,23 @@ export const ProductCard = ({
         </div>
       </CardContent>
       <CardFooter className="pt-2">
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="w-full"
-              onClick={() => onViewTasks(product)}
-            >
-              View Tasks
-            </Button>
-          </DialogTrigger>
-        </Dialog>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="w-full"
+                onClick={() => onViewTasks(product)}
+              >
+                View Tasks
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>View tasks inherited from ingredients</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </CardFooter>
     </Card>
   );

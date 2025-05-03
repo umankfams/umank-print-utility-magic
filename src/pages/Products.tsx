@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   Dialog,
@@ -32,8 +33,6 @@ const Products = () => {
 
   const {
     ingredients,
-    createTaskTemplate,
-    deleteTaskTemplate,
   } = useIngredients();
 
   const { data: productWithDetails } = getProductWithDetails(selectedProduct?.id || "");
@@ -99,22 +98,6 @@ const Products = () => {
           ingredientId: values.ingredientId,
           quantity: values.quantity,
         });
-        
-        // Check if the ingredient has associated tasks and inherit them
-        if (selectedIngredient.tasks && selectedIngredient.tasks.length > 0) {
-          // Create similar tasks for the product
-          selectedIngredient.tasks.forEach(task => {
-            createTaskTemplate({
-              title: `${task.title} (from ${selectedIngredient.name})`,
-              description: task.description,
-              priority: task.priority as TaskPriority,
-              isSubtask: task.isSubtask,
-              parentTemplateId: task.parentTemplateId,
-              ingredientId: task.ingredientId,
-              productId: selectedProduct.id,
-            });
-          });
-        }
       }
     }
   };
@@ -128,27 +111,6 @@ const Products = () => {
   const handleViewTasks = (product: Product) => {
     setSelectedProduct(product);
     setOpenTaskDialog(true);
-  };
-
-  const handleAddTask = (values: any) => {
-    if (selectedProduct) {
-      createTaskTemplate({
-        title: values.title,
-        description: values.description,
-        priority: values.priority as TaskPriority,
-        isSubtask: values.isSubtask,
-        parentTemplateId: values.parentTemplateId,
-        ingredientId: undefined,
-        productId: selectedProduct.id,
-      });
-    }
-    setOpenTaskDialog(false);
-  };
-
-  const handleDeleteTask = (taskId: string) => {
-    if (confirm("Are you sure you want to delete this task?")) {
-      deleteTaskTemplate(taskId);
-    }
   };
 
   if (isLoading) {
@@ -208,14 +170,13 @@ const Products = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Task Dialog - keep separate for now */}
+        {/* Display Task Dialog - read-only view of tasks from ingredients */}
         <Dialog open={openTaskDialog} onOpenChange={setOpenTaskDialog}>
           {selectedProduct && productWithDetails && (
             <TaskDialog
               product={selectedProduct}
               tasks={productWithDetails.tasks || []}
-              onAddTask={handleAddTask}
-              onDeleteTask={handleDeleteTask}
+              readonly={true}
             />
           )}
         </Dialog>
