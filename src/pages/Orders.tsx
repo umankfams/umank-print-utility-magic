@@ -38,11 +38,14 @@ import { Button } from "@/components/ui/button";
 import AppNavbar from "@/components/AppNavbar";
 import { useOrders } from "@/hooks/useOrders";
 import { useProducts } from "@/hooks/useProducts";
-import { Order, OrderStatus } from "@/types";
+import { Order, OrderStatus, Product } from "@/types";
 import { Plus, TrashIcon, EditIcon, ShoppingCartIcon, Filter } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const orderSchema = z.object({
   customerId: z.string().optional(),
@@ -60,12 +63,25 @@ const orderItemSchema = z.object({
 type OrderFormValues = z.infer<typeof orderSchema>;
 type OrderItemFormValues = z.infer<typeof orderItemSchema>;
 
+const productSelectionSchema = z.object({
+  selectedProducts: z.array(
+    z.object({
+      id: z.string(),
+      quantity: z.number().min(1, "Quantity must be at least 1"),
+    })
+  ),
+});
+
+type ProductSelectionFormValues = z.infer<typeof productSelectionSchema>;
+
 const Orders = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [openItemDialog, setOpenItemDialog] = useState(false);
+  const [openProductSelectionDialog, setOpenProductSelectionDialog] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
+  const [selectedProducts, setSelectedProducts] = useState<{id: string, quantity: number}[]>([]);
   
   const {
     orders,
@@ -100,7 +116,52 @@ const Orders = () => {
     },
   });
 
+  const productSelectionForm = useForm<ProductSelectionFormValues>({
+    resolver: zodResolver(productSelectionSchema),
+    defaultValues: {
+      selectedProducts: [],
+    },
+  });
+
   const { data: orderWithItems } = getOrderWithItems(selectedOrder?.id || "");
+
+  const handleProductSelection = (productId: string, isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedProducts([...selectedProducts, { id: productId, quantity: 1 }]);
+    } else {
+      setSelectedProducts(selectedProducts.filter(p => p.id !== productId));
+    }
+  };
+
+  const handleProductQuantityChange = (productId: string, quantity: number) => {
+    setSelectedProducts(
+      selectedProducts.map(product => 
+        product.id === productId ? { ...product, quantity } : product
+      )
+    );
+  };
+
+  const addSelectedProductsToOrder = () => {
+    if (selectedOrder && selectedProducts.length > 0) {
+      // Find product details for each selected product
+      selectedProducts.forEach(selectedProduct => {
+        const productDetails = products.find(p => p.id === selectedProduct.id);
+        
+        if (productDetails) {
+          addItem({
+            orderId: selectedOrder.id,
+            productId: selectedProduct.id,
+            quantity: selectedProduct.quantity,
+            price: productDetails.sellingPrice,
+          });
+        }
+      });
+
+      // Reset selected products and close dialog
+      setSelectedProducts([]);
+      setOpenProductSelectionDialog(false);
+    }
+  };
 
   const onSubmit = (values: OrderFormValues) => {
     if (isEditing && selectedOrder) {
@@ -183,8 +244,7 @@ const Orders = () => {
 
   const handleAddItem = (order: Order) => {
     setSelectedOrder(order);
-    itemForm.reset();
-    setOpenItemDialog(true);
+    setOpenProductSelectionDialog(true);
   };
 
   const handleRemoveItem = (id: string, orderId: string) => {
@@ -196,6 +256,15 @@ const Orders = () => {
   const filteredOrders = statusFilter === "all" 
     ? orders 
     : orders.filter(order => order.status === statusFilter);
+
+  const isProductSelected = (productId: string) => {
+    return selectedProducts.some(product => product.id === productId);
+  };
+
+  const getProductQuantity = (productId: string) => {
+    const product = selectedProducts.find(p => p.id === productId);
+    return product ? product.quantity : 1;
+  };
 
   if (isLoading) {
     return (
@@ -417,19 +486,17 @@ const Orders = () => {
                   <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm mb-4">
                     <div className="flex items-center gap-1">
                       <span className="font-medium">Status:</span>
-                      <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          order.status === "completed"
-                            ? "bg-green-100 text-green-800"
-                            : order.status === "cancelled"
-                            ? "bg-red-100 text-red-800"
-                            : order.status === "processing"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
+                      <Badge variant={
+                        order.status === "completed"
+                          ? "success"
+                          : order.status === "cancelled"
+                          ? "destructive"
+                          : order.status === "processing"
+                          ? "default"
+                          : "outline"
+                      }>
                         {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                      </span>
+                      </Badge>
                     </div>
                     <div>
                       <span className="font-medium">Order Date:</span>{" "}
@@ -472,7 +539,7 @@ const Orders = () => {
                             onClick={() => handleAddItem(order)}
                           >
                             <Plus className="h-4 w-4 mr-2" />
-                            Add Item
+                            Add Products
                           </Button>
                         </div>
                         {orderWithItems?.items?.length ? (
@@ -489,7 +556,7 @@ const Orders = () => {
                             <TableBody>
                               {orderWithItems.items.map((item) => (
                                 <TableRow key={item.id}>
-                                  <TableCell>{item.product?.name}</TableCell>
+                                  <TableCell>{item.product?.name || 'Unknown Product'}</TableCell>
                                   <TableCell>{item.quantity}</TableCell>
                                   <TableCell>${item.price.toFixed(2)}</TableCell>
                                   <TableCell>
@@ -542,7 +609,7 @@ const Orders = () => {
                     onClick={() => handleAddItem(order)}
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Item
+                    Add Products
                   </Button>
                 </CardFooter>
               </Card>
@@ -551,7 +618,7 @@ const Orders = () => {
         </div>
       </div>
 
-      {/* Item Dialog */}
+      {/* Item Dialog - Simple version */}
       <Dialog open={openItemDialog} onOpenChange={setOpenItemDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -650,6 +717,133 @@ const Orders = () => {
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Enhanced Product Selection Dialog */}
+      <Dialog open={openProductSelectionDialog} onOpenChange={setOpenProductSelectionDialog}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle>Add Products to Order</DialogTitle>
+            <DialogDescription>
+              Select products to add to order #{selectedOrder?.id.substring(0, 8)}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="border rounded-md p-4">
+              <h3 className="font-medium mb-2">Selected Products: {selectedProducts.length}</h3>
+              {selectedProducts.length > 0 ? (
+                <div className="space-y-2">
+                  {selectedProducts.map(selectedProduct => {
+                    const productDetails = products.find(p => p.id === selectedProduct.id);
+                    return (
+                      <div key={selectedProduct.id} className="flex items-center justify-between border-b pb-2">
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 w-6 p-0" 
+                            onClick={() => handleProductSelection(selectedProduct.id, false)}
+                          >
+                            <TrashIcon className="h-4 w-4 text-red-500" />
+                          </Button>
+                          <span>{productDetails?.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            ${productDetails?.sellingPrice.toFixed(2)} each
+                          </span>
+                          <Input
+                            type="number"
+                            className="w-16 h-8"
+                            min={1}
+                            value={selectedProduct.quantity}
+                            onChange={(e) => 
+                              handleProductQuantityChange(
+                                selectedProduct.id, 
+                                parseInt(e.target.value) || 1
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No products selected yet</p>
+              )}
+            </div>
+            
+            <div>
+              <h3 className="font-medium mb-2">Available Products</h3>
+              <ScrollArea className="h-[300px] rounded border p-2">
+                <div className="space-y-2">
+                  {products.map((product) => (
+                    <div key={product.id} className="flex items-center justify-between py-2 border-b">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id={`product-${product.id}`}
+                          checked={isProductSelected(product.id)}
+                          onCheckedChange={(checked) => 
+                            handleProductSelection(product.id, checked as boolean)
+                          }
+                        />
+                        <div>
+                          <label 
+                            htmlFor={`product-${product.id}`}
+                            className="text-sm font-medium cursor-pointer"
+                          >
+                            {product.name}
+                          </label>
+                          <p className="text-xs text-muted-foreground">
+                            ${product.sellingPrice.toFixed(2)} · Stock: {product.stock} {product.stock === 1 ? 'unit' : 'units'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {isProductSelected(product.id) && (
+                        <Input
+                          type="number"
+                          className="w-16 h-8"
+                          min={1}
+                          max={product.stock}
+                          value={getProductQuantity(product.id)}
+                          onChange={(e) => 
+                            handleProductQuantityChange(
+                              product.id, 
+                              parseInt(e.target.value) || 1
+                            )
+                          }
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <div className="flex gap-2 justify-end w-full">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setSelectedProducts([]);
+                  setOpenProductSelectionDialog(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={addSelectedProductsToOrder}
+                disabled={selectedProducts.length === 0}
+              >
+                Add {selectedProducts.length} {selectedProducts.length === 1 ? 'Product' : 'Products'} to Order
+              </Button>
+            </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
