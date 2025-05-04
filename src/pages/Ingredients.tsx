@@ -186,14 +186,15 @@ const Ingredients = () => {
   };
 
   const renderPriorityBadge = (priority: TaskPriority) => {
-    const variantMap: Record<TaskPriority, string> = {
+    // Fix the type mapping to use only allowed variant values
+    const variantMap: Record<TaskPriority, "default" | "destructive" | "success" | "secondary" | "outline"> = {
       low: "success",
       medium: "secondary",
       high: "destructive",
     };
     
     return (
-      <Badge variant={variantMap[priority] || "secondary"}>
+      <Badge variant={variantMap[priority]}>
         {priority}
       </Badge>
     );
