@@ -10,10 +10,11 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import { Edit as EditIcon, Trash as TrashIcon } from "lucide-react";
+import { Edit as EditIcon, Trash as TrashIcon, FileText } from "lucide-react";
 import { Product } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 interface ProductCardProps {
   product: Product;
@@ -100,7 +101,13 @@ export const ProductCard = ({
           <div className="flex justify-between">
             <span>Stock:</span>
             <span className="font-medium">
-              {product.stock} units
+              {product.stock === 0 ? (
+                <Badge variant="destructive">Out of Stock</Badge>
+              ) : product.stock < product.minOrder ? (
+                <Badge variant="warning">Low Stock</Badge>
+              ) : (
+                `${product.stock} units`
+              )}
             </span>
           </div>
           <div className="flex justify-between">
@@ -121,7 +128,7 @@ export const ProductCard = ({
                 className="w-full"
                 onClick={() => onViewTasks(product)}
               >
-                View Tasks
+                <FileText className="h-4 w-4 mr-2" /> View Tasks
               </Button>
             </TooltipTrigger>
             <TooltipContent>

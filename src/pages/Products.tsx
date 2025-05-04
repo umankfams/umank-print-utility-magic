@@ -13,12 +13,16 @@ import { calculateSellingPrice } from "@/lib/utils";
 import { ProductList } from "@/components/products/ProductList";
 import { IntegratedProductForm } from "@/components/products/IntegratedProductForm";
 import { TaskDialog } from "@/components/products/TaskDialog";
+import { LayoutGrid, LayoutList } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ProductTable } from "@/components/products/ProductTable";
 
 const Products = () => {
   const [openProductDialog, setOpenProductDialog] = useState(false);
   const [openTaskDialog, setOpenTaskDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   
   const {
     products,
@@ -143,15 +147,52 @@ const Products = () => {
     <div className="min-h-screen bg-background">
       <AppNavbar />
       <div className="container mx-auto px-4 py-8">
-        {/* Product List */}
-        <ProductList 
-          products={products} 
-          onAddNew={handleAddProduct} 
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onViewIngredients={() => {}} // No longer needed, but keep for interface compatibility
-          onViewTasks={handleViewTasks}
-        />
+        {/* Header with View Toggle */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Products</h1>
+          <div className="flex gap-4">
+            <div className="flex border rounded-md overflow-hidden">
+              <Button 
+                variant={viewMode === "grid" ? "default" : "ghost"} 
+                size="sm" 
+                onClick={() => setViewMode("grid")}
+                className="rounded-none"
+              >
+                <LayoutGrid className="h-4 w-4 mr-1" />
+                Grid
+              </Button>
+              <Button 
+                variant={viewMode === "table" ? "default" : "ghost"} 
+                size="sm" 
+                onClick={() => setViewMode("table")}
+                className="rounded-none"
+              >
+                <LayoutList className="h-4 w-4 mr-1" />
+                Table
+              </Button>
+            </div>
+            <Button onClick={handleAddProduct}>Add Product</Button>
+          </div>
+        </div>
+
+        {/* Conditional Rendering of View Mode */}
+        {viewMode === "grid" ? (
+          <ProductList 
+            products={products} 
+            onAddNew={handleAddProduct} 
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onViewIngredients={() => {}} // No longer needed, but kept for interface compatibility
+            onViewTasks={handleViewTasks}
+          />
+        ) : (
+          <ProductTable
+            products={products}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onViewTasks={handleViewTasks}
+          />
+        )}
 
         {/* Integrated Product Form Dialog */}
         <Dialog open={openProductDialog} onOpenChange={setOpenProductDialog}>

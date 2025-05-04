@@ -22,35 +22,25 @@ export const ProductList = ({
   onViewTasks,
 }: ProductListProps) => {
   return (
-    <>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Products</h1>
-        <Button onClick={onAddNew}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Product
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onViewIngredients={onViewIngredients}
-            onViewTasks={onViewTasks}
-          />
-        ))}
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {products.map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onViewIngredients={onViewIngredients}
+          onViewTasks={onViewTasks}
+        />
+      ))}
 
       {products.length === 0 && (
-        <div className="text-center py-10">
+        <div className="text-center py-10 col-span-full">
           <p className="text-muted-foreground">
             No products found. Click "Add Product" to create one.
           </p>
         </div>
       )}
-    </>
+    </div>
   );
 };

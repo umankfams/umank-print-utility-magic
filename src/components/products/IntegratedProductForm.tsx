@@ -1,63 +1,66 @@
 
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { DialogFooter } from "@/components/ui/dialog";
-import { Slider } from "@/components/ui/slider";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Product, Ingredient, ProductIngredient, TaskPriority } from "@/types";
-import { formatCurrency, calculateSellingPrice } from "@/lib/utils";
-import { Plus, Trash } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-
-// Form schema for product details
-const productSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  description: z.string().optional(),
-  markupPercentage: z.number().min(0, "Markup cannot be negative").max(300, "Markup cannot exceed 300%"),
-  stock: z.number().min(0, "Stock cannot be negative"),
-  minOrder: z.number().min(1, "Minimum order must be at least 1"),
-});
-
-// Form schema for adding ingredients
-const ingredientSchema = z.object({
-  ingredientId: z.string().min(1, "Ingredient is required"),
-  quantity: z.number().min(0.01, "Quantity must be greater than 0"),
-});
-
-type ProductFormValues = z.infer<typeof productSchema>;
-type IngredientFormValues = z.infer<typeof ingredientSchema>;
+import { Textarea } from "@/components/ui/textarea";
+import { Product, Ingredient, ProductIngredient } from "@/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { formatCurrency } from "@/lib/utils";
 
 interface IntegratedProductFormProps {
   isEditing: boolean;
   selectedProduct: Product | null;
   ingredients: Ingredient[];
   productIngredients: ProductIngredient[];
-  onSubmit: (values: ProductFormValues) => void;
-  onAddIngredient: (values: IngredientFormValues) => void;
+  onSubmit: (values: any) => void;
+  onAddIngredient: (values: any) => void;
   onRemoveIngredient: (id: string, productId: string) => void;
 }
 
-export const IntegratedProductForm = ({
+const productSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  description: z.string().optional(),
+  stock: z.number().nonnegative("Stock must be a positive number").default(0),
+  minOrder: z.number().positive("Minimum order must be greater than 0").default(1),
+  markupPercentage: z.number().min(0, "Markup percentage must be positive").default(30),
+});
+
+const ingredientSchema = z.object({
+  ingredientId: z.string().min(1, "Ingredient is required"),
+  quantity: z.number().positive("Quantity must be greater than 0").default(1),
+});
+
+// Helper function to consolidate ingredients
+const consolidateIngredients = (productIngredients: ProductIngredient[]): ProductIngredient[] => {
+  const consolidatedMap = new Map<string, ProductIngredient>();
+  
+  productIngredients.forEach(item => {
+    if (!item.ingredient) return;
+    
+    const key = item.ingredient.id;
+    if (consolidatedMap.has(key)) {
+      // Increase quantity of existing entry
+      const existing = consolidatedMap.get(key)!;
+      consolidatedMap.set(key, {
+        ...existing,
+        quantity: existing.quantity + item.quantity
+      });
+    } else {
+      // Add new entry
+      consolidatedMap.set(key, {...item});
+    }
+  });
+  
+  return Array.from(consolidatedMap.values());
+};
+
+export function IntegratedProductForm({
   isEditing,
   selectedProduct,
   ingredients,
@@ -65,27 +68,27 @@ export const IntegratedProductForm = ({
   onSubmit,
   onAddIngredient,
   onRemoveIngredient,
-}: IntegratedProductFormProps) => {
-  const [currentCostPrice, setCurrentCostPrice] = useState(0);
-  const [calculatedSellingPrice, setCalculatedSellingPrice] = useState(0);
-  const [activeTab, setActiveTab] = useState("details");
+}: IntegratedProductFormProps) {
+  const [selectedIngredientPrice, setSelectedIngredientPrice] = useState<number>(0);
+  const [totalCost, setTotalCost] = useState<number>(0);
+  const [isIngredientFormVisible, setIsIngredientFormVisible] = useState<boolean>(false);
 
-  // Product details form
-  const productForm = useForm<ProductFormValues>({
+  // Main product form
+  const form = useForm<z.infer<typeof productSchema>>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: selectedProduct?.name || "",
       description: selectedProduct?.description || "",
-      markupPercentage: isEditing && selectedProduct
-        ? Math.round(((selectedProduct.sellingPrice - selectedProduct.costPrice) / selectedProduct.costPrice) * 100) || 30
-        : 30,
       stock: selectedProduct?.stock || 0,
       minOrder: selectedProduct?.minOrder || 1,
+      markupPercentage: selectedProduct?.costPrice 
+        ? Math.round(((selectedProduct.sellingPrice - selectedProduct.costPrice) / selectedProduct.costPrice) * 100) 
+        : 30,
     },
   });
 
   // Ingredient form
-  const ingredientForm = useForm<IngredientFormValues>({
+  const ingredientForm = useForm<z.infer<typeof ingredientSchema>>({
     resolver: zodResolver(ingredientSchema),
     defaultValues: {
       ingredientId: "",
@@ -93,147 +96,222 @@ export const IntegratedProductForm = ({
     },
   });
 
-  // Watch markup percentage changes from the form
-  const watchMarkupPercentage = productForm.watch("markupPercentage");
+  // Convert productIngredients to a more usable format and consolidate identical ingredients
+  const consolidatedIngredients = consolidateIngredients(productIngredients);
 
-  // Update calculated selling price when markup percentage or cost price changes
+  // Update total cost when ingredients change
   useEffect(() => {
-    if (isEditing && selectedProduct) {
-      setCurrentCostPrice(selectedProduct.costPrice);
-      const sellingPrice = calculateSellingPrice(selectedProduct.costPrice, watchMarkupPercentage);
-      setCalculatedSellingPrice(sellingPrice);
+    if (selectedProduct) {
+      setTotalCost(selectedProduct.costPrice);
     } else {
-      setCalculatedSellingPrice(calculateSellingPrice(currentCostPrice, watchMarkupPercentage));
+      const total = consolidatedIngredients.reduce((sum, item) => {
+        if (!item.ingredient) return sum;
+        return sum + (item.quantity * item.ingredient.pricePerUnit);
+      }, 0);
+      setTotalCost(total);
     }
-  }, [watchMarkupPercentage, currentCostPrice, selectedProduct, isEditing]);
+  }, [selectedProduct, consolidatedIngredients]);
 
-  const handleProductFormSubmit = (values: ProductFormValues) => {
-    onSubmit(values);
+  // Handle ingredient selection change
+  const handleIngredientChange = (value: string) => {
+    const ingredient = ingredients.find(i => i.id === value);
+    if (ingredient) {
+      setSelectedIngredientPrice(ingredient.pricePerUnit);
+    } else {
+      setSelectedIngredientPrice(0);
+    }
   };
 
-  const handleIngredientFormSubmit = (values: IngredientFormValues) => {
-    console.log("Form values:", values);
-    if (!selectedProduct) {
-      toast({
-        title: "Error",
-        description: "Please save the product before adding ingredients.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!values.ingredientId) {
-      toast({
-        title: "Error",
-        description: "Please select an ingredient.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
+  // Handle adding ingredient
+  const handleAddIngredient = (values: z.infer<typeof ingredientSchema>) => {
     onAddIngredient(values);
-    ingredientForm.reset({
-      ingredientId: "",
-      quantity: 1,
-    });
+    ingredientForm.reset();
+    setIsIngredientFormVisible(false);
   };
 
-  // Calculate total ingredients cost
-  const totalIngredientsCost = productIngredients.reduce((sum, item) => {
-    if (!item.ingredient) return sum;
-    return sum + (item.ingredient.pricePerUnit * item.quantity);
-  }, 0);
+  // Calculate markup preview
+  const calculatePreviewPrice = () => {
+    const markup = form.watch("markupPercentage");
+    return totalCost * (1 + markup / 100);
+  };
 
   return (
-    <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="details">Product Details</TabsTrigger>
-          <TabsTrigger value="ingredients">
-            Ingredients
-            {productIngredients.length > 0 && (
-              <span className="ml-2 rounded-full bg-primary w-6 h-6 flex items-center justify-center text-xs text-white">
-                {productIngredients.length}
-              </span>
+    <div className="space-y-4">
+      {/* Product Form */}
+      <Form {...form}>
+        <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Product Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter product name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
-          </TabsTrigger>
-        </TabsList>
+          />
 
-        <TabsContent value="details" className="space-y-4 pt-4">
-          <Form {...productForm}>
-            <form onSubmit={productForm.handleSubmit(handleProductFormSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Enter product description" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="stock"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Stock</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="minOrder"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Minimum Order</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="1"
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Price information */}
+          <div className="bg-muted p-4 rounded-md">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-medium">Cost Price</p>
+                <p className="text-lg font-bold">{formatCurrency(totalCost)}</p>
+                <p className="text-xs text-muted-foreground">Based on ingredients</p>
+              </div>
+
               <FormField
-                control={productForm.control}
-                name="name"
+                control={form.control}
+                name="markupPercentage"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>Markup (%)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter product name" {...field} />
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+            </div>
 
-              <FormField
-                control={productForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter description (optional)" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="mt-2">
+              <p className="text-sm font-medium">Selling Price Preview</p>
+              <p className="text-lg font-bold">{formatCurrency(calculatePreviewPrice())}</p>
+            </div>
+          </div>
 
+          <div className="flex justify-end">
+            <Button type="submit">{isEditing ? "Update Product" : "Create Product"}</Button>
+          </div>
+        </form>
+      </Form>
+
+      <Separator className="my-4" />
+
+      {/* Ingredients Section */}
+      <div>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium">Ingredients</h3>
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setIsIngredientFormVisible(!isIngredientFormVisible)}
+          >
+            {isIngredientFormVisible ? "Cancel" : "Add Ingredient"}
+          </Button>
+        </div>
+
+        {/* Ingredient Form */}
+        {isIngredientFormVisible && (
+          <Form {...ingredientForm}>
+            <form className="space-y-4 bg-muted p-4 rounded-md mb-4" onSubmit={ingredientForm.handleSubmit(handleAddIngredient)}>
               <div className="grid grid-cols-2 gap-4">
                 <FormField
-                  control={productForm.control}
-                  name="stock"
+                  control={ingredientForm.control}
+                  name="ingredientId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Stock</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value === ""
-                                ? 0
-                                : parseFloat(e.target.value)
-                            )
-                          }
-                        />
-                      </FormControl>
+                      <FormLabel>Ingredient</FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          handleIngredientChange(value);
+                        }}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select ingredient" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {ingredients.map((ingredient) => (
+                            <SelectItem key={ingredient.id} value={ingredient.id}>
+                              {ingredient.name} - {formatCurrency(ingredient.pricePerUnit)}/{ingredient.unit}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
                 <FormField
-                  control={productForm.control}
-                  name="minOrder"
+                  control={ingredientForm.control}
+                  name="quantity"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Minimum Order</FormLabel>
+                      <FormLabel>Quantity</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
-                          placeholder="1"
+                          step="0.01"
                           {...field}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value === ""
-                                ? 1
-                                : parseInt(e.target.value)
-                            )
-                          }
+                          onChange={(e) => field.onChange(Number(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />
@@ -242,173 +320,42 @@ export const IntegratedProductForm = ({
                 />
               </div>
 
-              <div className="rounded-lg border p-4 space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium">Cost Price (from ingredients):</span>
-                  <span className="font-bold">
-                    {formatCurrency(isEditing && selectedProduct ? selectedProduct.costPrice : totalIngredientsCost)}
-                  </span>
-                </div>
-
-                <FormField
-                  control={productForm.control}
-                  name="markupPercentage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex justify-between">
-                        <FormLabel>Markup Percentage</FormLabel>
-                        <span className="text-sm font-medium">{field.value}%</span>
-                      </div>
-                      <FormControl>
-                        <Slider
-                          defaultValue={[field.value]}
-                          min={0}
-                          max={300}
-                          step={1}
-                          onValueChange={(value) => field.onChange(value[0])}
-                          className="py-4"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="flex justify-between pt-2 border-t">
-                  <span className="text-sm font-medium">Final Selling Price:</span>
-                  <span className="font-bold text-lg">
-                    {formatCurrency(calculatedSellingPrice)}
-                  </span>
-                </div>
+              <div className="text-sm">
+                <span>Price: {formatCurrency(selectedIngredientPrice)} × Quantity</span>
               </div>
 
-              <DialogFooter>
-                <Button type="submit" className="w-full">
-                  {isEditing ? "Update Product" : "Add Product"}
-                </Button>
-              </DialogFooter>
+              <Button type="submit" size="sm">Add to Recipe</Button>
             </form>
           </Form>
-        </TabsContent>
+        )}
 
-        <TabsContent value="ingredients" className="space-y-6 pt-4">
-          {productIngredients.length > 0 ? (
-            <div className="rounded-lg border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Ingredient</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Unit</TableHead>
-                    <TableHead className="text-right">Cost</TableHead>
-                    <TableHead className="w-[70px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {productIngredients.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.ingredient?.name}</TableCell>
-                      <TableCell>{item.quantity}</TableCell>
-                      <TableCell>{item.ingredient?.unit}</TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency((item.ingredient?.pricePerUnit || 0) * item.quantity)}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => selectedProduct && onRemoveIngredient(item.id, selectedProduct.id)}
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-right font-semibold">Total Cost:</TableCell>
-                    <TableCell className="text-right font-bold">{formatCurrency(totalIngredientsCost)}</TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="text-center py-8 border rounded-lg bg-muted/30">
-              <p className="text-muted-foreground">
-                No ingredients added to this product yet.
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Add ingredients below to calculate the product cost.
-              </p>
-            </div>
-          )}
-
-          <div className="border rounded-lg p-4">
-            <h3 className="font-medium mb-3">Add Ingredient</h3>
-            <Form {...ingredientForm}>
-              <form onSubmit={ingredientForm.handleSubmit(handleIngredientFormSubmit)} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={ingredientForm.control}
-                    name="ingredientId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ingredient</FormLabel>
-                        <FormControl>
-                          <select
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                            {...field}
-                            value={field.value}
-                          >
-                            <option value="">Select an ingredient</option>
-                            {ingredients.map((ingredient) => (
-                              <option key={ingredient.id} value={ingredient.id}>
-                                {ingredient.name} ({formatCurrency(ingredient.pricePerUnit)} per {ingredient.unit})
-                              </option>
-                            ))}
-                          </select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={ingredientForm.control}
-                    name="quantity"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Quantity</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="1"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value === ""
-                                  ? 0
-                                  : parseFloat(e.target.value)
-                              )
-                            }
-                            value={field.value}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+        {/* Ingredients List */}
+        {consolidatedIngredients.length > 0 ? (
+          <div className="border rounded-md divide-y">
+            {consolidatedIngredients.map((item) => (
+              item.ingredient && (
+                <div key={item.id} className="p-3 flex justify-between items-center">
+                  <div>
+                    <p className="font-medium">{item.ingredient.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {item.quantity} {item.ingredient.unit} × {formatCurrency(item.ingredient.pricePerUnit)} = {formatCurrency(item.quantity * item.ingredient.pricePerUnit)}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onRemoveIngredient(item.id, item.productId)}
+                  >
+                    Remove
+                  </Button>
                 </div>
-
-                <Button type="submit" className="w-full flex items-center">
-                  <Plus className="h-4 w-4 mr-2" /> Add Ingredient
-                </Button>
-              </form>
-            </Form>
+              )
+            ))}
           </div>
-        </TabsContent>
-      </Tabs>
+        ) : (
+          <p className="text-center py-4 text-muted-foreground">No ingredients added yet.</p>
+        )}
+      </div>
     </div>
   );
 };
