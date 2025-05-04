@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   Card,
@@ -34,13 +35,17 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import AppNavbar from "@/components/AppNavbar";
 import { useIngredients } from "@/hooks/useIngredients";
 import { Ingredient, TaskTemplate, IngredientUnit, TaskPriority } from "@/types";
-import { Plus, EditIcon, TrashIcon } from "lucide-react";
+import { Plus, EditIcon, TrashIcon, Grid2x2, LayoutList } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { formatCurrency } from "@/lib/utils";
 
 const ingredientSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -61,11 +66,14 @@ const taskSchema = z.object({
 type IngredientFormValues = z.infer<typeof ingredientSchema>;
 type TaskFormValues = z.infer<typeof taskSchema>;
 
+type ViewMode = "grid" | "table";
+
 const Ingredients = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [openTaskDialog, setOpenTaskDialog] = useState(false);
   const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   
   const {
     ingredients,
@@ -177,6 +185,20 @@ const Ingredients = () => {
     }
   };
 
+  const renderPriorityBadge = (priority: TaskPriority) => {
+    const variantMap: Record<TaskPriority, string> = {
+      low: "success",
+      medium: "secondary",
+      high: "destructive",
+    };
+    
+    return (
+      <Badge variant={variantMap[priority] || "secondary"}>
+        {priority}
+      </Badge>
+    );
+  };
+
   if (isLoading) {
     return (
       <div>
@@ -209,74 +231,43 @@ const Ingredients = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Ingredients</h1>
-          <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-            <DialogTrigger asChild>
-              <Button onClick={() => { resetForm(); setOpenDialog(true); }}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Ingredient
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>
-                  {isEditing ? "Edit Ingredient" : "Add New Ingredient"}
-                </DialogTitle>
-                <DialogDescription>
-                  {isEditing
-                    ? "Update the ingredient details below"
-                    : "Fill in the details for the new ingredient"}
-                </DialogDescription>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter ingredient name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter description (optional)" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-2 gap-4">
+          <div className="flex gap-4">
+            <ToggleGroup type="single" value={viewMode} onValueChange={(value: string) => value && setViewMode(value as ViewMode)}>
+              <ToggleGroupItem value="grid" aria-label="Grid View">
+                <Grid2x2 className="h-4 w-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="table" aria-label="Table View">
+                <LayoutList className="h-4 w-4" />
+              </ToggleGroupItem>
+            </ToggleGroup>
+            <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+              <DialogTrigger asChild>
+                <Button onClick={() => { resetForm(); setOpenDialog(true); }}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Ingredient
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>
+                    {isEditing ? "Edit Ingredient" : "Add New Ingredient"}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {isEditing
+                      ? "Update the ingredient details below"
+                      : "Fill in the details for the new ingredient"}
+                  </DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <FormField
                       control={form.control}
-                      name="stock"
+                      name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Stock</FormLabel>
+                          <FormLabel>Name</FormLabel>
                           <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="0"
-                              {...field}
-                              onChange={(e) =>
-                                field.onChange(
-                                  e.target.value === ""
-                                    ? 0
-                                    : parseFloat(e.target.value)
-                                )
-                              }
-                            />
+                            <Input placeholder="Enter ingredient name" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -285,199 +276,354 @@ const Ingredients = () => {
 
                     <FormField
                       control={form.control}
-                      name="pricePerUnit"
+                      name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Price Per Unit</FormLabel>
+                          <FormLabel>Description</FormLabel>
                           <FormControl>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              placeholder="0.00"
-                              {...field}
-                              onChange={(e) =>
-                                field.onChange(
-                                  e.target.value === ""
-                                    ? 0
-                                    : parseFloat(e.target.value)
-                                )
-                              }
-                            />
+                            <Input placeholder="Enter description (optional)" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
 
-                  <FormField
-                    control={form.control}
-                    name="unit"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Unit</FormLabel>
-                        <FormControl>
-                          <select
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                            {...field}
-                          >
-                            {unitOptions.map((unit) => (
-                              <option key={unit} value={unit}>
-                                {unit}
-                              </option>
-                            ))}
-                          </select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="stock"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Stock</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(
+                                    e.target.value === ""
+                                      ? 0
+                                      : parseFloat(e.target.value)
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                  <DialogFooter>
-                    <Button type="submit">
-                      {isEditing ? "Update Ingredient" : "Add Ingredient"}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+                      <FormField
+                        control={form.control}
+                        name="pricePerUnit"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Price Per Unit</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                placeholder="0.00"
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(
+                                    e.target.value === ""
+                                      ? 0
+                                      : parseFloat(e.target.value)
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="unit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Unit</FormLabel>
+                          <FormControl>
+                            <select
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                              {...field}
+                            >
+                              {unitOptions.map((unit) => (
+                                <option key={unit} value={unit}>
+                                  {unit}
+                                </option>
+                              ))}
+                            </select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <DialogFooter>
+                      <Button type="submit">
+                        {isEditing ? "Update Ingredient" : "Add Ingredient"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {ingredients.map((ingredient) => (
-            <Card key={ingredient.id} className="overflow-hidden">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex justify-between items-start">
-                  <span>{ingredient.name}</span>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(ingredient)}
-                    >
-                      <EditIcon className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(ingredient.id)}
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </Button>
+        {viewMode === "grid" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {ingredients.map((ingredient) => (
+              <Card key={ingredient.id} className="overflow-hidden">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex justify-between items-start">
+                    <span>{ingredient.name}</span>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(ingredient)}
+                      >
+                        <EditIcon className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(ingredient.id)}
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardTitle>
+                  <CardDescription>
+                    {ingredient.description || "No description"}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pb-2">
+                  <div className="text-sm space-y-1">
+                    <div className="flex justify-between">
+                      <span>Stock:</span>
+                      <span className="font-medium">
+                        {ingredient.stock} {ingredient.unit}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Price per Unit:</span>
+                      <span className="font-medium">
+                        {formatCurrency(ingredient.pricePerUnit)}
+                      </span>
+                    </div>
                   </div>
-                </CardTitle>
-                <CardDescription>
-                  {ingredient.description || "No description"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pb-2">
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span>Stock:</span>
-                    <span className="font-medium">
-                      {ingredient.stock} {ingredient.unit}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Price per Unit:</span>
-                    <span className="font-medium">
-                      ${ingredient.pricePerUnit.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setSelectedIngredient(ingredient)}
-                    >
-                      View Tasks
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-[800px] w-full">
-                    <DialogHeader>
-                      <DialogTitle>Tasks for {ingredient.name}</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-medium">Predefined Tasks</h3>
+                </CardContent>
+                <CardFooter>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setSelectedIngredient(ingredient)}
+                      >
+                        View Tasks
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-[800px] w-full">
+                      <DialogHeader>
+                        <DialogTitle>Tasks for {ingredient.name}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <h3 className="text-lg font-medium">Predefined Tasks</h3>
+                          <Button
+                            size="sm"
+                            onClick={() => handleAddTask(ingredient)}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Task
+                          </Button>
+                        </div>
+                        {ingredientWithTasks?.tasks?.length ? (
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Title</TableHead>
+                                <TableHead>Description</TableHead>
+                                <TableHead>Priority</TableHead>
+                                <TableHead>Type</TableHead>
+                                <TableHead className="w-[100px]">Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {ingredientWithTasks.tasks.map((task) => (
+                                <TableRow key={task.id}>
+                                  <TableCell>{task.title}</TableCell>
+                                  <TableCell>{task.description || "-"}</TableCell>
+                                  <TableCell>
+                                    {renderPriorityBadge(task.priority as TaskPriority)}
+                                  </TableCell>
+                                  <TableCell>
+                                    {task.isSubtask ? "Subtask" : "Main Task"}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleDeleteTask(task.id)}
+                                    >
+                                      <TrashIcon className="h-4 w-4" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        ) : (
+                          <p className="text-muted-foreground">
+                            No tasks defined for this ingredient.
+                          </p>
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => handleAddTask(ingredient)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Task
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Stock</TableHead>
+                  <TableHead>Unit</TableHead>
+                  <TableHead>Price/Unit</TableHead>
+                  <TableHead>Tasks</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {ingredients.map((ingredient) => (
+                  <TableRow key={ingredient.id}>
+                    <TableCell className="font-medium">{ingredient.name}</TableCell>
+                    <TableCell>{ingredient.description || "-"}</TableCell>
+                    <TableCell>{ingredient.stock}</TableCell>
+                    <TableCell>{ingredient.unit}</TableCell>
+                    <TableCell>{formatCurrency(ingredient.pricePerUnit)}</TableCell>
+                    <TableCell>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setSelectedIngredient(ingredient)}
+                          >
+                            View Tasks
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-[800px] w-full">
+                          <DialogHeader>
+                            <DialogTitle>Tasks for {ingredient.name}</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                              <h3 className="text-lg font-medium">Predefined Tasks</h3>
+                              <Button
+                                size="sm"
+                                onClick={() => handleAddTask(ingredient)}
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Task
+                              </Button>
+                            </div>
+                            {ingredientWithTasks?.tasks?.length ? (
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Title</TableHead>
+                                    <TableHead>Description</TableHead>
+                                    <TableHead>Priority</TableHead>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead className="w-[100px]">Actions</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {ingredientWithTasks.tasks.map((task) => (
+                                    <TableRow key={task.id}>
+                                      <TableCell>{task.title}</TableCell>
+                                      <TableCell>{task.description || "-"}</TableCell>
+                                      <TableCell>
+                                        {renderPriorityBadge(task.priority as TaskPriority)}
+                                      </TableCell>
+                                      <TableCell>
+                                        {task.isSubtask ? "Subtask" : "Main Task"}
+                                      </TableCell>
+                                      <TableCell>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleDeleteTask(task.id)}
+                                        >
+                                          <TrashIcon className="h-4 w-4" />
+                                        </Button>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            ) : (
+                              <p className="text-muted-foreground">
+                                No tasks defined for this ingredient.
+                              </p>
+                            )}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
                         <Button
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleAddTask(ingredient)}
                         >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Task
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(ingredient)}
+                        >
+                          <EditIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(ingredient.id)}
+                        >
+                          <TrashIcon className="h-4 w-4" />
                         </Button>
                       </div>
-                      {ingredientWithTasks?.tasks?.length ? (
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Title</TableHead>
-                              <TableHead>Description</TableHead>
-                              <TableHead>Priority</TableHead>
-                              <TableHead>Type</TableHead>
-                              <TableHead className="w-[100px]">Actions</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {ingredientWithTasks.tasks.map((task) => (
-                              <TableRow key={task.id}>
-                                <TableCell>{task.title}</TableCell>
-                                <TableCell>{task.description || "-"}</TableCell>
-                                <TableCell>
-                                  <span
-                                    className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                      task.priority === "high"
-                                        ? "bg-red-100 text-red-800"
-                                        : task.priority === "medium"
-                                        ? "bg-yellow-100 text-yellow-800"
-                                        : "bg-green-100 text-green-800"
-                                    }`}
-                                  >
-                                    {task.priority}
-                                  </span>
-                                </TableCell>
-                                <TableCell>
-                                  {task.isSubtask ? "Subtask" : "Main Task"}
-                                </TableCell>
-                                <TableCell>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleDeleteTask(task.id)}
-                                  >
-                                    <TrashIcon className="h-4 w-4" />
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      ) : (
-                        <p className="text-muted-foreground">
-                          No tasks defined for this ingredient.
-                        </p>
-                      )}
-                    </div>
-                  </DialogContent>
-                </Dialog>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => handleAddTask(ingredient)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Task
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
 
         {ingredients.length === 0 && (
           <div className="text-center py-10">
@@ -554,11 +700,9 @@ const Ingredients = () => {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                     <FormControl>
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={field.value}
-                        onChange={field.onChange}
-                        className="h-4 w-4 mt-1"
+                        onCheckedChange={field.onChange}
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
