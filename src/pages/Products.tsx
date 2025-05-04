@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import AppNavbar from "@/components/AppNavbar";
 import { useProducts } from "@/hooks/useProducts";
@@ -86,6 +87,7 @@ const Products = () => {
 
   const handleAddIngredient = (values: any) => {
     if (selectedProduct) {
+      console.log("Adding ingredient:", values);
       // Find the selected ingredient to get its unit price and tasks
       const selectedIngredient = ingredients.find(
         (i) => i.id === values.ingredientId
@@ -154,6 +156,9 @@ const Products = () => {
         {/* Integrated Product Form Dialog */}
         <Dialog open={openProductDialog} onOpenChange={setOpenProductDialog}>
           <DialogContent className="sm:max-w-[700px]">
+            <DialogTitle>
+              {isEditing ? "Edit Product" : "Add Product"}
+            </DialogTitle>
             {selectedProduct || !isEditing ? (
               <IntegratedProductForm
                 isEditing={isEditing}

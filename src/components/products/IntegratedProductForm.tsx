@@ -27,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Product, Ingredient, ProductIngredient, TaskPriority } from "@/types";
 import { formatCurrency, calculateSellingPrice } from "@/lib/utils";
 import { Plus, Trash } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 // Form schema for product details
 const productSchema = z.object({
@@ -111,8 +112,30 @@ export const IntegratedProductForm = ({
   };
 
   const handleIngredientFormSubmit = (values: IngredientFormValues) => {
+    console.log("Form values:", values);
+    if (!selectedProduct) {
+      toast({
+        title: "Error",
+        description: "Please save the product before adding ingredients.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!values.ingredientId) {
+      toast({
+        title: "Error",
+        description: "Please select an ingredient.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     onAddIngredient(values);
-    ingredientForm.reset();
+    ingredientForm.reset({
+      ingredientId: "",
+      quantity: 1,
+    });
   };
 
   // Calculate total ingredients cost
@@ -123,10 +146,6 @@ export const IntegratedProductForm = ({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">
-        {isEditing ? "Edit Product" : "Add Product"}
-      </h2>
-      
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="details">Product Details</TabsTrigger>
@@ -339,6 +358,7 @@ export const IntegratedProductForm = ({
                           <select
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                             {...field}
+                            value={field.value}
                           >
                             <option value="">Select an ingredient</option>
                             {ingredients.map((ingredient) => (
@@ -372,6 +392,7 @@ export const IntegratedProductForm = ({
                                   : parseFloat(e.target.value)
                               )
                             }
+                            value={field.value}
                           />
                         </FormControl>
                         <FormMessage />

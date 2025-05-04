@@ -557,8 +557,8 @@ export type Database = {
         Row: {
           assignee_id: string | null
           created_at: string | null
-          deadline: string | null
           description: string | null
+          due_date: string | null
           id: string
           ingredient_id: string | null
           order_id: string | null
@@ -567,12 +567,13 @@ export type Database = {
           status: string
           title: string
           updated_at: string | null
+          user_id: string
         }
         Insert: {
           assignee_id?: string | null
           created_at?: string | null
-          deadline?: string | null
           description?: string | null
+          due_date?: string | null
           id?: string
           ingredient_id?: string | null
           order_id?: string | null
@@ -581,12 +582,13 @@ export type Database = {
           status?: string
           title: string
           updated_at?: string | null
+          user_id: string
         }
         Update: {
           assignee_id?: string | null
           created_at?: string | null
-          deadline?: string | null
           description?: string | null
+          due_date?: string | null
           id?: string
           ingredient_id?: string | null
           order_id?: string | null
@@ -595,6 +597,7 @@ export type Database = {
           status?: string
           title?: string
           updated_at?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -619,6 +622,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          raw_user_meta_data: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id: string
+          raw_user_meta_data?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          raw_user_meta_data?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
