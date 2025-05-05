@@ -1,4 +1,3 @@
-
 export type PrintJobStatus = 'pending' | 'printing' | 'completed' | 'failed';
 
 export interface PrintJob {
@@ -69,6 +68,8 @@ export interface Task {
   assigneeId?: string;
   createdAt: Date;
   updatedAt: Date;
+  productName?: string;
+  ingredientName?: string;
 }
 
 export interface ProductIngredient {

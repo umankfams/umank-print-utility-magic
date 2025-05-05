@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Task, TaskStatus } from "@/types";
+import { Task, TaskStatus, TaskPriority, TaskType } from "@/types";
 import { toast } from "@/hooks/use-toast";
 
 export function useTasks(orderStatus?: string) {
@@ -50,12 +50,12 @@ export function useTasks(orderStatus?: string) {
       title: item.title,
       description: item.description,
       status: item.status as TaskStatus,
-      priority: item.priority,
+      priority: item.priority as TaskPriority,
       parentTaskId: item.parent_task_id,
       orderId: item.order_id,
       ingredientId: item.ingredient_id,
       productId: item.product_id,
-      taskType: item.task_type,
+      taskType: item.task_type as TaskType,
       deadline: item.deadline ? new Date(item.deadline) : undefined,
       assigneeId: item.assignee_id,
       createdAt: new Date(item.created_at),
@@ -129,12 +129,12 @@ export function useTasks(orderStatus?: string) {
       title: data.title,
       description: data.description,
       status: data.status as TaskStatus,
-      priority: data.priority,
+      priority: data.priority as TaskPriority,
       parentTaskId: data.parent_task_id,
       orderId: data.order_id,
       ingredientId: data.ingredient_id,
       productId: data.product_id,
-      taskType: data.task_type,
+      taskType: data.task_type as TaskType,
       deadline: data.deadline ? new Date(data.deadline) : undefined,
       assigneeId: data.assignee_id,
       createdAt: new Date(data.created_at),
