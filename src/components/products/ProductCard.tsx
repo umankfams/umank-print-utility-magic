@@ -132,7 +132,7 @@ export const ProductCard = ({
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>View tasks inherited from ingredients</p>
+              <p>View tasks for this product</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

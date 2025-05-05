@@ -623,6 +623,50 @@ export type Database = {
           },
         ]
       }
+      timeline_events: {
+        Row: {
+          created_at: string | null
+          description: string
+          file_type: string | null
+          file_url: string | null
+          id: string
+          status: string
+          task_id: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          status: string
+          task_id?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          status?: string
+          task_id?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timeline_events_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks1"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           created_at: string | null

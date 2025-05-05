@@ -10,6 +10,7 @@ import Settings from "./pages/Settings";
 import Ingredients from "./pages/Ingredients";
 import Products from "./pages/Products";
 import Orders from "./pages/Orders";
+import Todo from "./pages/Todo";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/ingredients" element={<Ingredients />} />
           <Route path="/products" element={<Products />} />
           <Route path="/orders" element={<Orders />} />
+          <Route path="/todo" element={<Todo />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
