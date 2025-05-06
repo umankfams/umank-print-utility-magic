@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task, TaskStatus, TaskPriority, TaskType } from "@/types";
@@ -66,11 +65,17 @@ export function useTasks(orderStatus?: string) {
           throw new Error(newError.message);
         }
         
-        data = newData || [];
+        // Use the new data instead of trying to reassign to 'data'
+        return transformTasksData(newData || []);
       }
     }
 
-    return (data || []).map(item => ({
+    return transformTasksData(data || []);
+  };
+
+  // Helper function to transform database rows to Task objects
+  const transformTasksData = (data: any[]): Task[] => {
+    return data.map(item => ({
       id: item.id,
       title: item.title,
       description: item.description,
