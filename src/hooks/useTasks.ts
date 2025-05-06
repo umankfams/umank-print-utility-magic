@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task, TaskStatus, TaskPriority, TaskType } from "@/types";
@@ -135,6 +136,12 @@ export function useTasks(orderStatus?: string) {
 
     console.log("Found task templates:", templates);
 
+    // If no templates exist, create default tasks
+    if (!templates || templates.length === 0) {
+      await createDefaultTasksForProduct(orderId, productId);
+      return;
+    }
+
     // Create parent tasks and map their IDs
     const templateTaskMap: Record<string, string> = {};
     
@@ -207,6 +214,120 @@ export function useTasks(orderStatus?: string) {
             ingredient_id: subtemplate.ingredient_id,
             task_type: 'automatic'
           });
+      }
+    }
+  };
+
+  // New helper function to create default tasks when no templates exist
+  const createDefaultTasksForProduct = async (orderId: string, productId: string): Promise<void> => {
+    console.log("Creating default tasks for product:", productId);
+    
+    // Get product details to use in task titles
+    const { data: product, error: productError } = await supabase
+      .from("products")
+      .select("name")
+      .eq("id", productId)
+      .single();
+      
+    if (productError) {
+      console.error("Error fetching product details:", productError);
+      throw new Error(productError.message);
+    }
+    
+    const productName = product?.name || "Product";
+    
+    // Check if tasks already exist
+    const { data: existingTasks } = await supabase
+      .from("tasks")
+      .select("id")
+      .eq("order_id", orderId)
+      .eq("product_id", productId);
+      
+    if (existingTasks && existingTasks.length > 0) {
+      console.log("Tasks already exist for this product in this order");
+      return;
+    }
+    
+    // Default tasks for a product
+    const defaultTasks = [
+      {
+        title: `Prepare ${productName}`,
+        description: `Initial preparation for ${productName}`,
+        priority: 'high' as TaskPriority,
+        subtasks: [
+          {
+            title: `Gather materials for ${productName}`,
+            description: `Collect all required materials for ${productName}`,
+            priority: 'medium' as TaskPriority
+          }
+        ]
+      },
+      {
+        title: `Assemble ${productName}`,
+        description: `Assembly process for ${productName}`,
+        priority: 'medium' as TaskPriority,
+        subtasks: [
+          {
+            title: `Quality check for ${productName}`,
+            description: `Perform quality inspection for ${productName}`,
+            priority: 'high' as TaskPriority
+          }
+        ]
+      },
+      {
+        title: `Finalize ${productName}`,
+        description: `Complete production of ${productName}`,
+        priority: 'medium' as TaskPriority
+      }
+    ];
+    
+    // Create the default tasks
+    for (const task of defaultTasks) {
+      // Create parent task
+      const { data: parentTask, error: parentError } = await supabase
+        .from("tasks")
+        .insert({
+          title: task.title,
+          description: task.description,
+          priority: task.priority,
+          status: 'todo',
+          order_id: orderId,
+          product_id: productId,
+          task_type: 'automatic'
+        })
+        .select()
+        .single();
+        
+      if (parentError) {
+        console.error("Error creating default task:", parentError);
+        throw new Error(parentError.message);
+      }
+      
+      console.log("Created default task:", parentTask.title);
+      
+      // Create subtasks if any
+      if (task.subtasks && task.subtasks.length > 0) {
+        for (const subtask of task.subtasks) {
+          const { error: subtaskError } = await supabase
+            .from("tasks")
+            .insert({
+              title: subtask.title,
+              description: subtask.description,
+              priority: subtask.priority,
+              status: 'todo',
+              parent_task_id: parentTask.id,
+              order_id: orderId,
+              product_id: productId,
+              task_type: 'automatic'
+            });
+            
+          if (subtaskError) {
+            console.error("Error creating default subtask:", subtaskError);
+            throw new Error(subtaskError.message);
+          }
+          
+          console.log("Created default subtask:", subtask.title);
+        }
       }
     }
   };
