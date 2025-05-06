@@ -45,6 +45,31 @@ export function useTasks(orderStatus?: string) {
       throw new Error(error.message);
     }
 
+    // If no tasks found, attempt to create them from order products
+    if (data && data.length === 0 && orderStatus === 'processing') {
+      console.log("No tasks found for processing orders, attempting to create them");
+      const { data: orderIds } = await supabase
+        .from("orders")
+        .select("id")
+        .eq("status", orderStatus);
+        
+      if (orderIds && orderIds.length > 0) {
+        for (const order of orderIds) {
+          await createTasksFromOrder(order.id);
+        }
+        
+        // Try fetching tasks again after creation
+        const { data: newData, error: newError } = await query;
+        
+        if (newError) {
+          console.error("Error fetching newly created tasks:", newError);
+          throw new Error(newError.message);
+        }
+        
+        data = newData || [];
+      }
+    }
+
     return (data || []).map(item => ({
       id: item.id,
       title: item.title,
@@ -63,6 +88,122 @@ export function useTasks(orderStatus?: string) {
       productName: item.products?.name,
       ingredientName: item.ingredients?.name
     }));
+  };
+
+  // Helper function to create tasks from product templates when an order is created
+  const createTasksFromOrder = async (orderId: string): Promise<void> => {
+    console.log("Creating tasks for order:", orderId);
+    // Get all products in this order
+    const { data: orderItems, error: itemsError } = await supabase
+      .from("order_items")
+      .select("product_id")
+      .eq("order_id", orderId);
+
+    if (itemsError) {
+      console.error("Error fetching order items for task creation:", itemsError);
+      throw new Error(itemsError.message);
+    }
+
+    console.log("Found order items:", orderItems);
+    
+    // For each product, create tasks from its templates
+    for (const item of orderItems) {
+      await createTasksFromProduct(orderId, item.product_id);
+    }
+  };
+
+  // Helper function to create tasks from a product's task templates
+  const createTasksFromProduct = async (orderId: string, productId: string): Promise<void> => {
+    console.log("Creating tasks for product:", productId, "in order:", orderId);
+    
+    // Get task templates for this product
+    const { data: templates, error: templatesError } = await supabase
+      .from("task_templates")
+      .select("*")
+      .eq("product_id", productId)
+      .eq("is_subtask", false); // Get only parent tasks
+
+    if (templatesError) {
+      console.error("Error fetching product task templates:", templatesError);
+      throw new Error(templatesError.message);
+    }
+
+    console.log("Found task templates:", templates);
+
+    // Create parent tasks and map their IDs
+    const templateTaskMap: Record<string, string> = {};
+    
+    for (const template of templates) {
+      // Check if this task already exists for this order and product
+      const { data: existingTasks } = await supabase
+        .from("tasks")
+        .select("id")
+        .eq("order_id", orderId)
+        .eq("product_id", productId)
+        .eq("title", template.title);
+        
+      if (existingTasks && existingTasks.length > 0) {
+        console.log("Task already exists:", template.title);
+        templateTaskMap[template.id] = existingTasks[0].id;
+        continue;
+      }
+      
+      // Create parent task
+      const { data: taskData, error: taskError } = await supabase
+        .from("tasks")
+        .insert({
+          title: template.title,
+          description: template.description,
+          priority: template.priority,
+          status: 'todo',
+          order_id: orderId,
+          product_id: productId,
+          ingredient_id: template.ingredient_id,
+          task_type: 'automatic'
+        })
+        .select()
+        .single();
+
+      if (taskError) {
+        console.error("Error creating task from template:", taskError);
+        throw new Error(taskError.message);
+      }
+
+      console.log("Created task:", taskData);
+      
+      // Store the mapping between template ID and new task ID
+      templateTaskMap[template.id] = taskData.id;
+
+      // Get subtasks for this template
+      const { data: subtemplates, error: subtemplatesError } = await supabase
+        .from("task_templates")
+        .select("*")
+        .eq("parent_template_id", template.id);
+
+      if (subtemplatesError) {
+        console.error("Error fetching subtask templates:", subtemplatesError);
+        throw new Error(subtemplatesError.message);
+      }
+
+      console.log("Found subtemplates:", subtemplates);
+      
+      // Create subtasks
+      for (const subtemplate of subtemplates) {
+        await supabase
+          .from("tasks")
+          .insert({
+            title: subtemplate.title,
+            description: subtemplate.description,
+            priority: subtemplate.priority,
+            status: 'todo',
+            parent_task_id: templateTaskMap[template.id],
+            order_id: orderId,
+            product_id: productId,
+            ingredient_id: subtemplate.ingredient_id,
+            task_type: 'automatic'
+          });
+      }
+    }
   };
 
   // Update task status
@@ -87,7 +228,7 @@ export function useTasks(orderStatus?: string) {
         description: task.description,
         priority: task.priority,
         deadline: task.deadline?.toISOString(),
-        assigneeId: task.assigneeId,
+        assignee_id: task.assigneeId,
         status: task.status,
         updated_at: new Date().toISOString()
       })

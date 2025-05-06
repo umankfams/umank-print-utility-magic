@@ -35,8 +35,15 @@ const Todo = () => {
     updateTaskStatus, 
     updateTask,
     createTask,
-    deleteTask
+    deleteTask,
+    error
   } = useTasks("processing");
+  
+  // Log information for debugging
+  console.log("Tasks:", tasks);
+  console.log("Grouped Tasks:", groupedTasks);
+  console.log("Loading:", isLoading);
+  console.log("Error:", error);
   
   const handleUpdateTaskStatus = (id: string, status: TaskStatus) => {
     updateTaskStatus({ id, status });
@@ -134,10 +141,28 @@ const Todo = () => {
           </Button>
         </div>
         
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 border border-destructive/50 bg-destructive/10 rounded-md text-destructive">
+            <p className="font-medium">Error loading tasks</p>
+            <p className="text-sm">{error.message}</p>
+          </div>
+        )}
+        
         {/* Kanban Board */}
         {isLoading ? (
           <div className="flex justify-center items-center h-[400px]">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : tasks.length === 0 ? (
+          <div className="text-center p-8 border rounded-md bg-muted/20">
+            <p className="text-muted-foreground mb-2">No tasks found for processing orders</p>
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.reload()}
+            >
+              Refresh
+            </Button>
           </div>
         ) : (
           <KanbanBoard
