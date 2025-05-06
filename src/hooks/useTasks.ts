@@ -66,7 +66,6 @@ export function useTasks(orderStatus?: string) {
           throw new Error(newError.message);
         }
         
-        // Use the new data instead of trying to reassign to 'data'
         return transformTasksData(newData || []);
       }
     }
@@ -136,9 +135,9 @@ export function useTasks(orderStatus?: string) {
 
     console.log("Found task templates:", templates);
 
-    // If no templates exist, create default tasks
+    // If no product templates exist, try to get ingredient-based tasks
     if (!templates || templates.length === 0) {
-      await createDefaultTasksForProduct(orderId, productId);
+      await createTasksFromProductIngredients(orderId, productId);
       return;
     }
 
@@ -218,7 +217,162 @@ export function useTasks(orderStatus?: string) {
     }
   };
 
-  // New helper function to create default tasks when no templates exist
+  // New helper function to create tasks from product ingredients when no templates exist
+  const createTasksFromProductIngredients = async (orderId: string, productId: string): Promise<void> => {
+    console.log("Creating tasks from ingredients for product:", productId);
+    
+    // Get the product details to include in task titles
+    const { data: product, error: productError } = await supabase
+      .from("products")
+      .select("name")
+      .eq("id", productId)
+      .single();
+      
+    if (productError) {
+      console.error("Error fetching product details:", productError);
+      throw new Error(productError.message);
+    }
+    
+    const productName = product?.name || "Product";
+    
+    // Get ingredients associated with this product
+    const { data: productIngredients, error: ingredientsError } = await supabase
+      .from("product_ingredients")
+      .select(`
+        quantity,
+        ingredients:ingredient_id (id, name)
+      `)
+      .eq("product_id", productId);
+      
+    if (ingredientsError) {
+      console.error("Error fetching product ingredients:", ingredientsError);
+      throw new Error(ingredientsError.message);
+    }
+    
+    console.log("Found product ingredients:", productIngredients);
+    
+    // If no ingredients, create default tasks
+    if (!productIngredients || productIngredients.length === 0) {
+      console.log("No ingredients found, creating default tasks");
+      await createDefaultTasksForProduct(orderId, productId);
+      return;
+    }
+    
+    // Check if tasks already exist
+    const { data: existingTasks } = await supabase
+      .from("tasks")
+      .select("id")
+      .eq("order_id", orderId)
+      .eq("product_id", productId);
+      
+    if (existingTasks && existingTasks.length > 0) {
+      console.log("Tasks already exist for this product in this order");
+      return;
+    }
+    
+    // For each ingredient, check if it has task templates
+    for (const productIngredient of productIngredients) {
+      const ingredientId = productIngredient.ingredients?.id;
+      const ingredientName = productIngredient.ingredients?.name || "Ingredient";
+      
+      if (!ingredientId) continue;
+      
+      // Get task templates for this ingredient
+      const { data: ingredientTemplates, error: templatesError } = await supabase
+        .from("task_templates")
+        .select("*")
+        .eq("ingredient_id", ingredientId)
+        .eq("is_subtask", false);
+        
+      if (templatesError) {
+        console.error("Error fetching ingredient task templates:", templatesError);
+        throw new Error(templatesError.message);
+      }
+      
+      console.log(`Found ${ingredientTemplates?.length || 0} templates for ingredient ${ingredientName}`);
+      
+      // If the ingredient has templates, create tasks from them
+      if (ingredientTemplates && ingredientTemplates.length > 0) {
+        const templateTaskMap: Record<string, string> = {};
+        
+        for (const template of ingredientTemplates) {
+          // Create parent task
+          const taskTitle = `${template.title} for ${productName} (${ingredientName})`;
+          
+          const { data: taskData, error: taskError } = await supabase
+            .from("tasks")
+            .insert({
+              title: taskTitle,
+              description: template.description,
+              priority: template.priority,
+              status: 'todo',
+              order_id: orderId,
+              product_id: productId,
+              ingredient_id: ingredientId,
+              task_type: 'automatic'
+            })
+            .select()
+            .single();
+            
+          if (taskError) {
+            console.error("Error creating ingredient task:", taskError);
+            throw new Error(taskError.message);
+          }
+          
+          console.log("Created ingredient task:", taskTitle);
+          
+          // Store the mapping between template ID and new task ID
+          templateTaskMap[template.id] = taskData.id;
+          
+          // Get subtasks for this template
+          const { data: subtemplates, error: subtemplatesError } = await supabase
+            .from("task_templates")
+            .select("*")
+            .eq("parent_template_id", template.id);
+            
+          if (subtemplatesError) {
+            console.error("Error fetching ingredient subtask templates:", subtemplatesError);
+            throw new Error(subtemplatesError.message);
+          }
+          
+          // Create subtasks
+          for (const subtemplate of subtemplates) {
+            const subtaskTitle = `${subtemplate.title} for ${productName} (${ingredientName})`;
+            
+            await supabase
+              .from("tasks")
+              .insert({
+                title: subtaskTitle,
+                description: subtemplate.description,
+                priority: subtemplate.priority,
+                status: 'todo',
+                parent_task_id: templateTaskMap[template.id],
+                order_id: orderId,
+                product_id: productId,
+                ingredient_id: ingredientId,
+                task_type: 'automatic'
+              });
+              
+            console.log("Created ingredient subtask:", subtaskTitle);
+          }
+        }
+      }
+    }
+    
+    // If no tasks were created from ingredients, create default tasks
+    const { data: createdTasks } = await supabase
+      .from("tasks")
+      .select("id")
+      .eq("order_id", orderId)
+      .eq("product_id", productId);
+      
+    if (!createdTasks || createdTasks.length === 0) {
+      console.log("No tasks were created from ingredients, creating default tasks");
+      await createDefaultTasksForProduct(orderId, productId);
+    }
+  };
+
+  // Helper function to create default tasks when no templates exist
   const createDefaultTasksForProduct = async (orderId: string, productId: string): Promise<void> => {
     console.log("Creating default tasks for product:", productId);
     
