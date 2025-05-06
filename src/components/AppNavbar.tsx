@@ -37,16 +37,6 @@ const navItems = [
     name: "Todo",
     path: "/todo",
     icon: <ListTodo className="h-5 w-5" />
-  },
-  {
-    name: "Print History",
-    path: "/history",
-    icon: <CalendarIcon className="h-5 w-5" />
-  },
-  {
-    name: "Settings",
-    path: "/settings",
-    icon: <ClipboardListIcon className="h-5 w-5" />
   }
 ];
 
