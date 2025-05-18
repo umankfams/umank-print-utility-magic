@@ -2,46 +2,52 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { v4 as uuidv4 } from "uuid";
 import { Customer } from "@/types";
-
-// Sample customer data
-const sampleCustomers: Customer[] = [
-  { id: "1", name: "PT Makmur Sejahtera", contact: "+62812345678", address: "Jl. Sudirman No. 123, Jakarta", createdAt: new Date(), updatedAt: new Date() },
-  { id: "2", name: "CV Bahagia Jaya", contact: "+62823456789", address: "Jl. Thamrin No. 456, Jakarta", createdAt: new Date(), updatedAt: new Date() },
-  { id: "3", name: "UD Sinar Terang", contact: "+62834567890", address: "Jl. Gajah Mada No. 789, Surabaya", createdAt: new Date(), updatedAt: new Date() },
-  { id: "4", name: "PT Maju Bersama", contact: "+62845678901", address: "Jl. Diponegoro No. 101, Bandung", createdAt: new Date(), updatedAt: new Date() },
-  { id: "5", name: "Toko Berkah Abadi", contact: "+62856789012", address: "Jl. Ahmad Yani No. 202, Semarang", createdAt: new Date(), updatedAt: new Date() },
-  { id: "6", name: "PT Indo Teknologi", contact: "+62867890123", address: "Jl. Pemuda No. 303, Yogyakarta", createdAt: new Date(), updatedAt: new Date() },
-  { id: "7", name: "CV Damai Sentosa", contact: "+62878901234", address: "Jl. Pahlawan No. 404, Surakarta", createdAt: new Date(), updatedAt: new Date() },
-  { id: "8", name: "UD Makmur Abadi", contact: "+62889012345", address: "Jl. Veteran No. 505, Malang", createdAt: new Date(), updatedAt: new Date() },
-  { id: "9", name: "PT Jaya Makmur", contact: "+62890123456", address: "Jl. Merdeka No. 606, Denpasar", createdAt: new Date(), updatedAt: new Date() },
-  { id: "10", name: "Toko Sejahtera", contact: "+62901234567", address: "Jl. Gatot Subroto No. 707, Medan", createdAt: new Date(), updatedAt: new Date() }
-];
+import { supabase } from "@/integrations/supabase/client";
 
 export const useCustomers = () => {
   const queryClient = useQueryClient();
   
-  // Get all customers
-  const { data: customers = sampleCustomers, isLoading, error } = useQuery({
+  // Get all customers from Supabase
+  const { data: customers = [], isLoading, error } = useQuery({
     queryKey: ['customers'],
     queryFn: async () => {
-      // In a real app, this would fetch from an API
-      return sampleCustomers;
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      
+      return data.map(customer => ({
+        ...customer,
+        id: customer.id,
+        createdAt: new Date(customer.created_at),
+        updatedAt: new Date(customer.updated_at)
+      })) as Customer[];
     }
   });
   
   // Create customer
   const createCustomer = useMutation({
-    mutationFn: (customer: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>) => {
-      const newCustomer: Customer = {
-        ...customer,
-        id: uuidv4(),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+    mutationFn: async (customer: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>) => {
+      const { data, error } = await supabase
+        .from('customers')
+        .insert({
+          name: customer.name,
+          contact: customer.contact,
+          address: customer.address
+        })
+        .select()
+        .single();
       
-      // In a real app, this would send to an API
-      sampleCustomers.push(newCustomer);
-      return Promise.resolve(newCustomer);
+      if (error) throw error;
+      
+      return {
+        ...data,
+        id: data.id,
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at)
+      } as Customer;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
@@ -50,18 +56,26 @@ export const useCustomers = () => {
   
   // Update customer
   const updateCustomer = useMutation({
-    mutationFn: (customer: Partial<Customer> & { id: string }) => {
-      const index = sampleCustomers.findIndex(c => c.id === customer.id);
-      if (index !== -1) {
-        sampleCustomers[index] = {
-          ...sampleCustomers[index],
-          ...customer,
-          updatedAt: new Date()
-        };
-      }
+    mutationFn: async (customer: Partial<Customer> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('customers')
+        .update({
+          name: customer.name,
+          contact: customer.contact,
+          address: customer.address
+        })
+        .eq('id', customer.id)
+        .select()
+        .single();
       
-      // In a real app, this would send to an API
-      return Promise.resolve(sampleCustomers[index]);
+      if (error) throw error;
+      
+      return {
+        ...data,
+        id: data.id,
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at)
+      } as Customer;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
@@ -70,14 +84,15 @@ export const useCustomers = () => {
   
   // Delete customer
   const deleteCustomer = useMutation({
-    mutationFn: (id: string) => {
-      const index = sampleCustomers.findIndex(c => c.id === id);
-      if (index !== -1) {
-        sampleCustomers.splice(index, 1);
-      }
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('customers')
+        .delete()
+        .eq('id', id);
       
-      // In a real app, this would send to an API
-      return Promise.resolve(id);
+      if (error) throw error;
+      
+      return id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
