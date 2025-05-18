@@ -19,7 +19,7 @@ interface TaskCardProps {
 export const TaskCard = ({ task, onDelete, onEdit, isDragging = false }: TaskCardProps) => {
   const [isHovering, setIsHovering] = useState(false);
 
-  const getPriorityColor = (priority?: TaskPriority) => {
+  const getPriorityColor = (priority?: TaskPriority): "default" | "secondary" | "destructive" | "outline" | "success" | "warning" => {
     switch (priority) {
       case 'high':
         return 'destructive';

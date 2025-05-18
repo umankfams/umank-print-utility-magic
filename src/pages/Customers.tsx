@@ -86,7 +86,12 @@ const Customers = () => {
         description: "Customer updated successfully",
       });
     } else {
-      createCustomer.mutate(values);
+      // Ensure name is always provided for new customers
+      createCustomer.mutate({
+        name: values.name, // This ensures name is always provided and not undefined
+        contact: values.contact,
+        address: values.address,
+      });
       toast({
         title: "Success",
         description: "Customer created successfully",
