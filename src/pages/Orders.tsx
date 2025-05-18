@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Card,
@@ -38,6 +37,7 @@ import { Button } from "@/components/ui/button";
 import AppNavbar from "@/components/AppNavbar";
 import { useOrders } from "@/hooks/useOrders";
 import { useProducts } from "@/hooks/useProducts";
+import { useCustomers } from "@/hooks/useCustomers";
 import { Order, OrderStatus, Product } from "@/types";
 import { Plus, TrashIcon, EditIcon, ShoppingCartIcon, Filter } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -96,6 +96,7 @@ const Orders = () => {
   } = useOrders();
 
   const { products } = useProducts();
+  const { customers } = useCustomers();
 
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(orderSchema),
@@ -345,9 +346,19 @@ const Orders = () => {
                       name="customerId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Customer ID (optional)</FormLabel>
+                          <FormLabel>Customer</FormLabel>
                           <FormControl>
-                            <Input placeholder="Customer ID" {...field} />
+                            <select
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                              {...field}
+                            >
+                              <option value="">Select a customer</option>
+                              {customers.map((customer) => (
+                                <option key={customer.id} value={customer.id}>
+                                  {customer.name}
+                                </option>
+                              ))}
+                            </select>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -498,6 +509,14 @@ const Orders = () => {
                         {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                       </Badge>
                     </div>
+                    
+                    {order.customerId && (
+                      <div>
+                        <span className="font-medium">Customer:</span>{" "}
+                        {customers.find(c => c.id === order.customerId)?.name || "Unknown"}
+                      </div>
+                    )}
+                    
                     <div>
                       <span className="font-medium">Order Date:</span>{" "}
                       {new Date(order.orderDate).toLocaleDateString()}

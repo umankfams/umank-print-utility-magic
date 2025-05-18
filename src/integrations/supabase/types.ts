@@ -558,7 +558,7 @@ export type Database = {
           assignee_id: string | null
           created_at: string | null
           description: string | null
-          due_date: string | null
+          dueDate: string | null
           id: string
           ingredient_id: string | null
           order_id: string | null
@@ -573,7 +573,7 @@ export type Database = {
           assignee_id?: string | null
           created_at?: string | null
           description?: string | null
-          due_date?: string | null
+          dueDate?: string | null
           id?: string
           ingredient_id?: string | null
           order_id?: string | null
@@ -588,7 +588,7 @@ export type Database = {
           assignee_id?: string | null
           created_at?: string | null
           description?: string | null
-          due_date?: string | null
+          dueDate?: string | null
           id?: string
           ingredient_id?: string | null
           order_id?: string | null

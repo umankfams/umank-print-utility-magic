@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Printer, Upload, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { PrintJob, PrintJobStatus } from "@/types";
+import { formatCurrency } from "@/lib/utils";
 
 const PrintJobForm = () => {
   const { toast } = useToast();

@@ -123,11 +123,11 @@ export interface Order {
   items?: OrderItem[];
 }
 
-export interface Customer {
+export type Customer = {
   id: string;
   name: string;
   contact?: string;
   address?: string;
   createdAt: Date;
   updatedAt: Date;
-}
+};
