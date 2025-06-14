@@ -1,6 +1,5 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { v4 as uuidv4 } from "uuid";
 import { Customer } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,6 +20,7 @@ export const useCustomers = () => {
       return data.map(customer => ({
         ...customer,
         id: customer.id,
+        isActive: customer.is_active,
         createdAt: new Date(customer.created_at),
         updatedAt: new Date(customer.updated_at)
       })) as Customer[];
@@ -35,7 +35,11 @@ export const useCustomers = () => {
         .insert({
           name: customer.name,
           contact: customer.contact,
-          address: customer.address
+          address: customer.address,
+          email: customer.email,
+          phone: customer.phone,
+          company: customer.company,
+          is_active: customer.isActive
         })
         .select()
         .single();
@@ -45,6 +49,7 @@ export const useCustomers = () => {
       return {
         ...data,
         id: data.id,
+        isActive: data.is_active,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at)
       } as Customer;
@@ -62,7 +67,11 @@ export const useCustomers = () => {
         .update({
           name: customer.name,
           contact: customer.contact,
-          address: customer.address
+          address: customer.address,
+          email: customer.email,
+          phone: customer.phone,
+          company: customer.company,
+          is_active: customer.isActive
         })
         .eq('id', customer.id)
         .select()
@@ -73,6 +82,7 @@ export const useCustomers = () => {
       return {
         ...data,
         id: data.id,
+        isActive: data.is_active,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at)
       } as Customer;

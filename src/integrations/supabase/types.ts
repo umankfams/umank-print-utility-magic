@@ -48,26 +48,38 @@ export type Database = {
       customers: {
         Row: {
           address: string | null
+          company: string | null
           contact: string | null
           created_at: string
+          email: string | null
           id: string
+          is_active: boolean
           name: string
+          phone: string | null
           updated_at: string
         }
         Insert: {
           address?: string | null
+          company?: string | null
           contact?: string | null
           created_at?: string
+          email?: string | null
           id?: string
+          is_active?: boolean
           name: string
+          phone?: string | null
           updated_at?: string
         }
         Update: {
           address?: string | null
+          company?: string | null
           contact?: string | null
           created_at?: string
+          email?: string | null
           id?: string
+          is_active?: boolean
           name?: string
+          phone?: string | null
           updated_at?: string
         }
         Relationships: []

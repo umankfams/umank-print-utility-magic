@@ -34,6 +34,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { useCustomers } from "@/hooks/useCustomers";
 import { Customer } from "@/types";
 import { Plus, TrashIcon, EditIcon, Users } from "lucide-react";
@@ -47,6 +49,10 @@ const customerSchema = z.object({
   name: z.string().min(1, "Name is required"),
   contact: z.string().optional(),
   address: z.string().optional(),
+  email: z.string().email("Invalid email").optional().or(z.literal("")),
+  phone: z.string().optional(),
+  company: z.string().optional(),
+  isActive: z.boolean(),
 });
 
 type CustomerFormValues = z.infer<typeof customerSchema>;
@@ -72,6 +78,10 @@ const Customers = () => {
       name: "",
       contact: "",
       address: "",
+      email: "",
+      phone: "",
+      company: "",
+      isActive: true,
     },
   });
 
@@ -86,11 +96,14 @@ const Customers = () => {
         description: "Customer updated successfully",
       });
     } else {
-      // Ensure name is always provided for new customers
       createCustomer.mutate({
-        name: values.name, // This ensures name is always provided and not undefined
+        name: values.name,
         contact: values.contact,
         address: values.address,
+        email: values.email,
+        phone: values.phone,
+        company: values.company,
+        isActive: values.isActive,
       });
       toast({
         title: "Success",
@@ -106,6 +119,10 @@ const Customers = () => {
       name: "",
       contact: "",
       address: "",
+      email: "",
+      phone: "",
+      company: "",
+      isActive: true,
     });
     setIsEditing(false);
     setSelectedCustomer(null);
@@ -119,6 +136,10 @@ const Customers = () => {
       name: customer.name,
       contact: customer.contact || "",
       address: customer.address || "",
+      email: customer.email || "",
+      phone: customer.phone || "",
+      company: customer.company || "",
+      isActive: customer.isActive,
     });
     
     setOpenDialog(true);
@@ -172,7 +193,7 @@ const Customers = () => {
                 New Customer
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>
                   {isEditing ? "Edit Customer" : "Create New Customer"}
@@ -185,28 +206,74 @@ const Customers = () => {
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Customer name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Name *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Customer name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="company"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Company</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Company name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="email@example.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Phone number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <FormField
                     control={form.control}
                     name="contact"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Contact (optional)</FormLabel>
+                        <FormLabel>Contact (Legacy)</FormLabel>
                         <FormControl>
-                          <Input placeholder="Phone number or email" {...field} />
+                          <Input placeholder="Legacy contact field" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -218,11 +285,32 @@ const Customers = () => {
                     name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Address (optional)</FormLabel>
+                        <FormLabel>Address</FormLabel>
                         <FormControl>
                           <Input placeholder="Full address" {...field} />
                         </FormControl>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="isActive"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Active Status</FormLabel>
+                          <p className="text-sm text-muted-foreground">
+                            Enable or disable this customer
+                          </p>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
                       </FormItem>
                     )}
                   />
@@ -256,8 +344,10 @@ const Customers = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Address</TableHead>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -265,8 +355,14 @@ const Customers = () => {
                 {customers.map((customer) => (
                   <TableRow key={customer.id}>
                     <TableCell className="font-medium">{customer.name}</TableCell>
-                    <TableCell>{customer.contact || "-"}</TableCell>
-                    <TableCell>{customer.address || "-"}</TableCell>
+                    <TableCell>{customer.company || "-"}</TableCell>
+                    <TableCell>{customer.email || "-"}</TableCell>
+                    <TableCell>{customer.phone || "-"}</TableCell>
+                    <TableCell>
+                      <Badge variant={customer.isActive ? "default" : "secondary"}>
+                        {customer.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
