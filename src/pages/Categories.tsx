@@ -50,7 +50,11 @@ const Categories = () => {
     if (editingCategory) {
       updateCategory(editingCategory.id, categoryData);
     } else {
-      addCategory(categoryData);
+      // Include the required 'type' field for new categories
+      addCategory({
+        ...categoryData,
+        type: 'product'
+      });
     }
     setEditingCategory(undefined);
   };
