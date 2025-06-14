@@ -26,11 +26,41 @@ const defaultCategories: ProductCategory[] = [
 ];
 
 export function useProductCategories() {
-  const [categories, setCategories] = useState<ProductCategory[]>(defaultCategories);
+  const [categories, setCategories] = useState<ProductCategory[]>(() => {
+    const saved = localStorage.getItem('productCategories');
+    return saved ? JSON.parse(saved) : defaultCategories;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('productCategories', JSON.stringify(categories));
+  }, [categories]);
+
+  const addCategory = (newCategory: Omit<ProductCategory, 'id'>) => {
+    const category: ProductCategory = {
+      ...newCategory,
+      id: Date.now().toString()
+    };
+    setCategories(prev => [...prev, category]);
+  };
+
+  const updateCategory = (id: string, updatedCategory: Omit<ProductCategory, 'id'>) => {
+    setCategories(prev => 
+      prev.map(cat => 
+        cat.id === id ? { ...updatedCategory, id } : cat
+      )
+    );
+  };
+
+  const deleteCategory = (id: string) => {
+    setCategories(prev => prev.filter(cat => cat.id !== id));
+  };
 
   return {
     categories,
     isLoading: false,
     error: null,
+    addCategory,
+    updateCategory,
+    deleteCategory,
   };
 }
