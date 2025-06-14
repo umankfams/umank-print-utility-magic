@@ -59,6 +59,7 @@ const Products = () => {
         id: selectedProduct.id,
         name: values.name,
         description: values.description,
+        categoryId: values.categoryId,
         costPrice: selectedProduct.costPrice, // Keep the cost price from server
         sellingPrice: effectiveSellingPrice,
         stock: values.stock || 0,
@@ -68,6 +69,7 @@ const Products = () => {
       createProduct({
         name: values.name,
         description: values.description,
+        categoryId: values.categoryId,
         costPrice: 0, // Cost price will be calculated on the server
         sellingPrice: effectiveSellingPrice,
         stock: values.stock || 0,

@@ -317,6 +317,7 @@ export type Database = {
       products: {
         Row: {
           branch_id: string | null
+          category_id: string | null
           cost_price: number
           created_at: string
           description: string | null
@@ -329,6 +330,7 @@ export type Database = {
         }
         Insert: {
           branch_id?: string | null
+          category_id?: string | null
           cost_price?: number
           created_at?: string
           description?: string | null
@@ -341,6 +343,7 @@ export type Database = {
         }
         Update: {
           branch_id?: string | null
+          category_id?: string | null
           cost_price?: number
           created_at?: string
           description?: string | null
@@ -351,7 +354,15 @@ export type Database = {
           stock?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "product_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       task_templates: {
         Row: {

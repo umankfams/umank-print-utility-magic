@@ -1,3 +1,4 @@
+
 export type PrintJobStatus = 'pending' | 'printing' | 'completed' | 'failed';
 
 export interface PrintJob {
@@ -90,6 +91,7 @@ export interface Product {
   sellingPrice: number;
   stock: number;
   minOrder: number;
+  categoryId?: string;
   branchId?: string;
   createdAt: Date;
   updatedAt: Date;

@@ -15,12 +15,21 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Product } from "@/types";
 import { formatCurrency, calculateSellingPrice } from "@/lib/utils";
+import { useProductCategories } from "@/hooks/useProductCategories";
 
 const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
+  categoryId: z.string().optional(),
   markupPercentage: z.number().min(0, "Markup cannot be negative").max(300, "Markup cannot exceed 300%"),
   stock: z.number().min(0, "Stock cannot be negative"),
   minOrder: z.number().min(1, "Minimum order must be at least 1"),
@@ -37,12 +46,14 @@ interface ProductFormProps {
 export const ProductForm = ({ isEditing, selectedProduct, onSubmit }: ProductFormProps) => {
   const [currentCostPrice, setCurrentCostPrice] = useState(0);
   const [calculatedSellingPrice, setCalculatedSellingPrice] = useState(0);
+  const { categories } = useProductCategories();
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: selectedProduct?.name || "",
       description: selectedProduct?.description || "",
+      categoryId: selectedProduct?.categoryId || "",
       markupPercentage: isEditing && selectedProduct
         ? Math.round(((selectedProduct.sellingPrice - selectedProduct.costPrice) / selectedProduct.costPrice) * 100)
         : 30,
@@ -95,6 +106,31 @@ export const ProductForm = ({ isEditing, selectedProduct, onSubmit }: ProductFor
               <FormControl>
                 <Input placeholder="Enter description (optional)" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="categoryId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

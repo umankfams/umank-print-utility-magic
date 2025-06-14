@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product, ProductIngredient, TaskTemplate, TaskPriority } from "@/types";
@@ -27,6 +26,7 @@ export function useProducts() {
       sellingPrice: Number(item.selling_price),
       stock: Number(item.stock),
       minOrder: Number(item.min_order),
+      categoryId: item.category_id,
       branchId: item.branch_id,
       createdAt: new Date(item.created_at),
       updatedAt: new Date(item.updated_at)
@@ -145,6 +145,7 @@ export function useProducts() {
       sellingPrice: Number(productData.selling_price),
       stock: Number(productData.stock),
       minOrder: Number(productData.min_order),
+      categoryId: productData.category_id,
       branchId: productData.branch_id,
       createdAt: new Date(productData.created_at),
       updatedAt: new Date(productData.updated_at),
@@ -163,6 +164,7 @@ export function useProducts() {
         selling_price: product.sellingPrice,
         stock: product.stock,
         min_order: product.minOrder,
+        category_id: product.categoryId,
         branch_id: product.branchId
       })
       .select()
@@ -181,6 +183,7 @@ export function useProducts() {
       sellingPrice: Number(data.selling_price),
       stock: Number(data.stock),
       minOrder: Number(data.min_order),
+      categoryId: data.category_id,
       branchId: data.branch_id,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at)
@@ -197,6 +200,7 @@ export function useProducts() {
         selling_price: product.sellingPrice,
         stock: product.stock,
         min_order: product.minOrder,
+        category_id: product.categoryId,
         branch_id: product.branchId,
         updated_at: new Date().toISOString()
       })
@@ -217,6 +221,7 @@ export function useProducts() {
       sellingPrice: Number(data.selling_price),
       stock: Number(data.stock),
       minOrder: Number(data.min_order),
+      categoryId: data.category_id,
       branchId: data.branch_id,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at)
