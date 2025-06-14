@@ -6,14 +6,12 @@ import { CategoryCard } from "@/components/categories/CategoryCard";
 import { CategoryForm } from "@/components/categories/CategoryForm";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import type { ProductCategory } from "@/hooks/useProductCategories";
 
 const Categories = () => {
   const { categories, isLoading, error, addCategory, updateCategory, deleteCategory } = useProductCategories();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ProductCategory | undefined>();
-  const { toast } = useToast();
 
   if (isLoading) {
     return (
@@ -45,16 +43,10 @@ const Categories = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus kategori ini?')) {
-      deleteCategory(id);
-      toast({
-        title: "Berhasil",
-        description: "Kategori berhasil dihapus"
-      });
-    }
+    deleteCategory(id);
   };
 
-  const handleSave = (categoryData: Omit<ProductCategory, 'id'>) => {
+  const handleSave = (categoryData: { key: string; label: string; icon: string; color: string }) => {
     if (editingCategory) {
       updateCategory(editingCategory.id, categoryData);
     } else {

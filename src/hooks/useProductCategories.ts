@@ -1,64 +1,138 @@
 
 import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
-export interface ProductCategory {
-  id: string;
-  key: string;
-  label: string;
-  icon: string;
-  color: string;
-}
-
-const defaultCategories: ProductCategory[] = [
-  { id: '1', key: 'kartu-nama', label: 'Kartu Nama', icon: 'card', color: '#3B82F6' },
-  { id: '2', key: 'brosur', label: 'Brosur', icon: 'file', color: '#10B981' },
-  { id: '3', key: 'flyer', label: 'Flyer', icon: 'file', color: '#F59E0B' },
-  { id: '4', key: 'poster', label: 'Poster', icon: 'image', color: '#EF4444' },
-  { id: '5', key: 'banner', label: 'Banner', icon: 'image', color: '#8B5CF6' },
-  { id: '6', key: 'stiker', label: 'Stiker', icon: 'tag', color: '#EC4899' },
-  { id: '7', key: 'undangan', label: 'Undangan', icon: 'calendar', color: '#06B6D4' },
-  { id: '8', key: 'kalender', label: 'Kalender', icon: 'calendar', color: '#84CC16' },
-  { id: '9', key: 'amplop', label: 'Amplop', icon: 'folder', color: '#F97316' },
-  { id: '10', key: 'nota', label: 'Nota', icon: 'clipboard', color: '#64748B' },
-  { id: '11', key: 'kop-surat', label: 'Kop Surat', icon: 'file', color: '#0EA5E9' },
-  { id: '12', key: 'yasin', label: 'Yasin', icon: 'book', color: '#22C55E' },
-  { id: '13', key: 'lainnya', label: 'Lainnya', icon: 'folder', color: '#6B7280' },
-];
+export type ProductCategory = Tables<"categories">;
+export type ProductCategoryInsert = TablesInsert<"categories">;
+export type ProductCategoryUpdate = TablesUpdate<"categories">;
 
 export function useProductCategories() {
-  const [categories, setCategories] = useState<ProductCategory[]>(() => {
-    const saved = localStorage.getItem('productCategories');
-    return saved ? JSON.parse(saved) : defaultCategories;
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch categories from Supabase
+  const { data: categories = [], isLoading, error } = useQuery({
+    queryKey: ['product-categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('type', 'product')
+        .order('created_at', { ascending: true });
+      
+      if (error) throw error;
+      return data as ProductCategory[];
+    }
   });
 
-  useEffect(() => {
-    localStorage.setItem('productCategories', JSON.stringify(categories));
-  }, [categories]);
+  // Add category mutation
+  const addCategoryMutation = useMutation({
+    mutationFn: async (newCategory: Omit<ProductCategoryInsert, 'id' | 'created_at' | 'updated_at'>) => {
+      const { data, error } = await supabase
+        .from('categories')
+        .insert({
+          ...newCategory,
+          type: 'product'
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product-categories'] });
+      toast({
+        title: "Berhasil",
+        description: "Kategori berhasil ditambahkan"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Gagal menambahkan kategori",
+        variant: "destructive"
+      });
+      console.error('Error adding category:', error);
+    }
+  });
 
-  const addCategory = (newCategory: Omit<ProductCategory, 'id'>) => {
-    const category: ProductCategory = {
-      ...newCategory,
-      id: Date.now().toString()
-    };
-    setCategories(prev => [...prev, category]);
+  // Update category mutation
+  const updateCategoryMutation = useMutation({
+    mutationFn: async ({ id, ...updateData }: { id: string } & Omit<ProductCategoryUpdate, 'id' | 'updated_at'>) => {
+      const { data, error } = await supabase
+        .from('categories')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product-categories'] });
+      toast({
+        title: "Berhasil",
+        description: "Kategori berhasil diperbarui"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Gagal memperbarui kategori",
+        variant: "destructive"
+      });
+      console.error('Error updating category:', error);
+    }
+  });
+
+  // Delete category mutation
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product-categories'] });
+      toast({
+        title: "Berhasil",
+        description: "Kategori berhasil dihapus"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Gagal menghapus kategori",
+        variant: "destructive"
+      });
+      console.error('Error deleting category:', error);
+    }
+  });
+
+  const addCategory = (newCategory: Omit<ProductCategoryInsert, 'id' | 'created_at' | 'updated_at'>) => {
+    addCategoryMutation.mutate(newCategory);
   };
 
-  const updateCategory = (id: string, updatedCategory: Omit<ProductCategory, 'id'>) => {
-    setCategories(prev => 
-      prev.map(cat => 
-        cat.id === id ? { ...updatedCategory, id } : cat
-      )
-    );
+  const updateCategory = (id: string, updatedCategory: Omit<ProductCategoryUpdate, 'id' | 'updated_at'>) => {
+    updateCategoryMutation.mutate({ id, ...updatedCategory });
   };
 
   const deleteCategory = (id: string) => {
-    setCategories(prev => prev.filter(cat => cat.id !== id));
+    deleteCategoryMutation.mutate(id);
   };
 
   return {
     categories,
-    isLoading: false,
-    error: null,
+    isLoading,
+    error,
     addCategory,
     updateCategory,
     deleteCategory,

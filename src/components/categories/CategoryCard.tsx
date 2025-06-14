@@ -12,8 +12,14 @@ interface CategoryCardProps {
 }
 
 export function CategoryCard({ category, onEdit, onDelete }: CategoryCardProps) {
-  // Get the icon component dynamically
+  // Get the icon component dynamically, with fallback to Folder
   const IconComponent = (LucideIcons as any)[category.icon] || LucideIcons.Folder;
+
+  const handleDelete = () => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus kategori ini?')) {
+      onDelete(category.id);
+    }
+  };
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -30,7 +36,7 @@ export function CategoryCard({ category, onEdit, onDelete }: CategoryCardProps) 
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => onDelete(category.id)}
+            onClick={handleDelete}
             className="h-8 w-8 p-0 text-red-600 hover:text-red-800"
           >
             <Trash2 className="h-4 w-4" />

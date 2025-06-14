@@ -1,17 +1,16 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ProductCategory } from "@/hooks/useProductCategories";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
 
 interface CategoryFormProps {
   category?: ProductCategory;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (category: Omit<ProductCategory, 'id'>) => void;
+  onSave: (category: { key: string; label: string; icon: string; color: string }) => void;
 }
 
 const colors = [
@@ -21,37 +20,45 @@ const colors = [
 ];
 
 const icons = [
-  'card', 'file', 'image', 'tag', 'calendar', 
-  'folder', 'clipboard', 'book', 'printer'
+  'Card', 'File', 'Image', 'Tag', 'Calendar', 
+  'Folder', 'Clipboard', 'Book', 'Printer'
 ];
 
 export function CategoryForm({ category, isOpen, onClose, onSave }: CategoryFormProps) {
   const [formData, setFormData] = useState({
-    key: category?.key || '',
-    label: category?.label || '',
-    icon: category?.icon || 'folder',
-    color: category?.color || '#3B82F6'
+    key: '',
+    label: '',
+    icon: 'Folder',
+    color: '#3B82F6'
   });
-  const { toast } = useToast();
+
+  useEffect(() => {
+    if (category) {
+      setFormData({
+        key: category.key,
+        label: category.label,
+        icon: category.icon,
+        color: category.color
+      });
+    } else {
+      setFormData({
+        key: '',
+        label: '',
+        icon: 'Folder',
+        color: '#3B82F6'
+      });
+    }
+  }, [category, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.key || !formData.label) {
-      toast({
-        title: "Error",
-        description: "Semua field wajib diisi",
-        variant: "destructive"
-      });
       return;
     }
 
     onSave(formData);
     onClose();
-    toast({
-      title: "Berhasil",
-      description: category ? "Kategori berhasil diperbarui" : "Kategori berhasil ditambahkan"
-    });
   };
 
   return (
@@ -71,6 +78,7 @@ export function CategoryForm({ category, isOpen, onClose, onSave }: CategoryForm
               value={formData.key}
               onChange={(e) => setFormData({ ...formData, key: e.target.value })}
               placeholder="contoh: kartu-nama"
+              required
             />
           </div>
           
@@ -81,6 +89,7 @@ export function CategoryForm({ category, isOpen, onClose, onSave }: CategoryForm
               value={formData.label}
               onChange={(e) => setFormData({ ...formData, label: e.target.value })}
               placeholder="contoh: Kartu Nama"
+              required
             />
           </div>
           
