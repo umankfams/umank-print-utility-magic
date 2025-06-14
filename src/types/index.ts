@@ -1,4 +1,3 @@
-
 export type PrintJobStatus = 'pending' | 'printing' | 'completed' | 'failed';
 
 export interface PrintJob {
@@ -31,6 +30,8 @@ export interface Ingredient {
   pricePerUnit: number;
   unit: IngredientUnit | string;
   branchId?: string;
+  quantity?: number;
+  notes?: string;
   createdAt: Date;
   updatedAt: Date;
   tasks?: TaskTemplate[];

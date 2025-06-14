@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Ingredient, TaskTemplate, TaskPriority } from "@/types";
@@ -27,6 +26,8 @@ export function useIngredients() {
       pricePerUnit: Number(item.price_per_unit),
       unit: item.unit,
       branchId: item.branch_id,
+      quantity: item.quantity ? Number(item.quantity) : undefined,
+      notes: item.notes,
       createdAt: new Date(item.created_at),
       updatedAt: new Date(item.updated_at)
     }));
@@ -79,6 +80,8 @@ export function useIngredients() {
       pricePerUnit: Number(ingredientData.price_per_unit),
       unit: ingredientData.unit,
       branchId: ingredientData.branch_id,
+      quantity: ingredientData.quantity ? Number(ingredientData.quantity) : undefined,
+      notes: ingredientData.notes,
       createdAt: new Date(ingredientData.created_at),
       updatedAt: new Date(ingredientData.updated_at),
       tasks
@@ -94,7 +97,9 @@ export function useIngredients() {
         stock: ingredient.stock,
         price_per_unit: ingredient.pricePerUnit,
         unit: ingredient.unit,
-        branch_id: ingredient.branchId
+        branch_id: ingredient.branchId,
+        quantity: ingredient.quantity,
+        notes: ingredient.notes
       })
       .select()
       .single();
@@ -112,6 +117,8 @@ export function useIngredients() {
       pricePerUnit: Number(data.price_per_unit),
       unit: data.unit,
       branchId: data.branch_id,
+      quantity: data.quantity ? Number(data.quantity) : undefined,
+      notes: data.notes,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at)
     };
@@ -127,6 +134,8 @@ export function useIngredients() {
         price_per_unit: ingredient.pricePerUnit,
         unit: ingredient.unit,
         branch_id: ingredient.branchId,
+        quantity: ingredient.quantity,
+        notes: ingredient.notes,
         updated_at: new Date().toISOString()
       })
       .eq("id", ingredient.id)
@@ -146,6 +155,8 @@ export function useIngredients() {
       pricePerUnit: Number(data.price_per_unit),
       unit: data.unit,
       branchId: data.branch_id,
+      quantity: data.quantity ? Number(data.quantity) : undefined,
+      notes: data.notes,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at)
     };

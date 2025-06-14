@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Card,
@@ -38,6 +37,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Textarea } from "@/components/ui/textarea";
 import AppNavbar from "@/components/AppNavbar";
 import { useIngredients } from "@/hooks/useIngredients";
 import { Ingredient, TaskTemplate, IngredientUnit, TaskPriority } from "@/types";
@@ -53,6 +53,8 @@ const ingredientSchema = z.object({
   stock: z.number().min(0, "Stock cannot be negative"),
   pricePerUnit: z.number().min(0, "Price cannot be negative"),
   unit: z.string().min(1, "Unit is required"),
+  quantity: z.number().min(0, "Quantity cannot be negative").optional(),
+  notes: z.string().optional(),
 });
 
 const taskSchema = z.object({
@@ -95,6 +97,8 @@ const Ingredients = () => {
       stock: 0,
       pricePerUnit: 0,
       unit: "kg",
+      quantity: 0,
+      notes: "",
     },
   });
 
@@ -124,6 +128,8 @@ const Ingredients = () => {
         stock: values.stock,
         pricePerUnit: values.pricePerUnit,
         unit: values.unit,
+        quantity: values.quantity,
+        notes: values.notes,
       });
     }
     setOpenDialog(false);
@@ -162,6 +168,8 @@ const Ingredients = () => {
       stock: ingredient.stock,
       pricePerUnit: ingredient.pricePerUnit,
       unit: ingredient.unit,
+      quantity: ingredient.quantity || 0,
+      notes: ingredient.notes || "",
     });
     
     setOpenDialog(true);
@@ -317,6 +325,33 @@ const Ingredients = () => {
 
                       <FormField
                         control={form.control}
+                        name="quantity"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Quantity</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                {...field}
+                                onChange={(e) =>
+                                  field.onChange(
+                                    e.target.value === ""
+                                      ? 0
+                                      : parseFloat(e.target.value)
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
                         name="pricePerUnit"
                         render={({ field }) => (
                           <FormItem>
@@ -340,25 +375,39 @@ const Ingredients = () => {
                           </FormItem>
                         )}
                       />
+
+                      <FormField
+                        control={form.control}
+                        name="unit"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Unit</FormLabel>
+                            <FormControl>
+                              <select
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                {...field}
+                              >
+                                {unitOptions.map((unit) => (
+                                  <option key={unit} value={unit}>
+                                    {unit}
+                                  </option>
+                                ))}
+                              </select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
 
                     <FormField
                       control={form.control}
-                      name="unit"
+                      name="notes"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Unit</FormLabel>
+                          <FormLabel>Notes</FormLabel>
                           <FormControl>
-                            <select
-                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                              {...field}
-                            >
-                              {unitOptions.map((unit) => (
-                                <option key={unit} value={unit}>
-                                  {unit}
-                                </option>
-                              ))}
-                            </select>
+                            <Textarea placeholder="Enter notes (optional)" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -413,12 +462,26 @@ const Ingredients = () => {
                         {ingredient.stock} {ingredient.unit}
                       </span>
                     </div>
+                    {ingredient.quantity !== undefined && (
+                      <div className="flex justify-between">
+                        <span>Quantity:</span>
+                        <span className="font-medium">
+                          {ingredient.quantity} {ingredient.unit}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span>Price per Unit:</span>
                       <span className="font-medium">
                         {formatCurrency(ingredient.pricePerUnit)}
                       </span>
                     </div>
+                    {ingredient.notes && (
+                      <div className="pt-2">
+                        <span className="text-xs text-muted-foreground">Notes:</span>
+                        <p className="text-xs mt-1">{ingredient.notes}</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
                 <CardFooter>
@@ -510,8 +573,10 @@ const Ingredients = () => {
                   <TableHead>Name</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Stock</TableHead>
+                  <TableHead>Quantity</TableHead>
                   <TableHead>Unit</TableHead>
                   <TableHead>Price/Unit</TableHead>
+                  <TableHead>Notes</TableHead>
                   <TableHead>Tasks</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -522,8 +587,10 @@ const Ingredients = () => {
                     <TableCell className="font-medium">{ingredient.name}</TableCell>
                     <TableCell>{ingredient.description || "-"}</TableCell>
                     <TableCell>{ingredient.stock}</TableCell>
+                    <TableCell>{ingredient.quantity || "-"}</TableCell>
                     <TableCell>{ingredient.unit}</TableCell>
                     <TableCell>{formatCurrency(ingredient.pricePerUnit)}</TableCell>
+                    <TableCell className="max-w-[150px] truncate">{ingredient.notes || "-"}</TableCell>
                     <TableCell>
                       <Dialog>
                         <DialogTrigger asChild>
@@ -635,7 +702,6 @@ const Ingredients = () => {
         )}
       </div>
 
-      {/* Task Dialog */}
       <Dialog open={openTaskDialog} onOpenChange={setOpenTaskDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
