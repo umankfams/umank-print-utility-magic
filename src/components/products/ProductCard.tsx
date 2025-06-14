@@ -49,7 +49,7 @@ export const ProductCard = ({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Edit product</p>
+                  <p>Edit produk</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -66,26 +66,26 @@ export const ProductCard = ({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Delete product</p>
+                  <p>Hapus produk</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
         </CardTitle>
         <CardDescription>
-          {product.description || "No description"}
+          {product.description || "Tidak ada deskripsi"}
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-2">
         <div className="text-sm space-y-1">
           <div className="flex justify-between">
-            <span>Cost Price:</span>
+            <span>Harga Pokok:</span>
             <span className="font-medium">
               {formatCurrency(product.costPrice)}
             </span>
           </div>
           <div className="flex justify-between">
-            <span>Selling Price:</span>
+            <span>Harga Jual:</span>
             <span className="font-medium">
               {formatCurrency(product.sellingPrice)}
             </span>
@@ -99,21 +99,21 @@ export const ProductCard = ({
             </span>
           </div>
           <div className="flex justify-between">
-            <span>Stock:</span>
+            <span>Stok:</span>
             <span className="font-medium">
               {product.stock === 0 ? (
-                <Badge variant="destructive">Out of Stock</Badge>
+                <Badge variant="destructive">Habis</Badge>
               ) : product.stock < product.minOrder ? (
-                <Badge variant="warning">Low Stock</Badge>
+                <Badge variant="warning">Stok Rendah</Badge>
               ) : (
-                `${product.stock} units`
+                `${product.stock} unit`
               )}
             </span>
           </div>
           <div className="flex justify-between">
-            <span>Min Order:</span>
+            <span>Pesanan Min:</span>
             <span className="font-medium">
-              {product.minOrder} units
+              {product.minOrder} unit
             </span>
           </div>
         </div>
@@ -128,11 +128,11 @@ export const ProductCard = ({
                 className="w-full"
                 onClick={() => onViewTasks(product)}
               >
-                <FileText className="h-4 w-4 mr-2" /> View Tasks
+                <FileText className="h-4 w-4 mr-2" /> Lihat Tugas
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>View tasks for this product</p>
+              <p>Lihat tugas untuk produk ini</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

@@ -14,29 +14,34 @@ import { useLocation } from "react-router-dom";
 
 const navItems = [
   {
-    name: "Dashboard",
+    name: "Beranda",
     path: "/",
     icon: <FileTextIcon className="h-5 w-5" />
   },
   {
-    name: "Ingredients",
+    name: "Bahan",
     path: "/ingredients",
     icon: <PackageIcon className="h-5 w-5" />
   },
   {
-    name: "Products",
+    name: "Produk",
     path: "/products",
     icon: <Package className="h-5 w-5" />
   },
   {
-    name: "Orders",
+    name: "Pesanan",
     path: "/orders",
     icon: <ShoppingCartIcon className="h-5 w-5" />
   },
   {
-    name: "Todo",
+    name: "Tugas",
     path: "/todo",
     icon: <ListTodo className="h-5 w-5" />
+  },
+  {
+    name: "Kategori",
+    path: "/categories",
+    icon: <ClipboardListIcon className="h-5 w-5" />
   }
 ];
 

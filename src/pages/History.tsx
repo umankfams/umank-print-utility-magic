@@ -8,8 +8,8 @@ const History = () => {
       <Header />
       <main className="container mx-auto px-4 py-6 flex-grow">
         <div className="mb-4">
-          <h2 className="text-2xl font-bold">Print History</h2>
-          <p className="text-muted-foreground">View all your previous print jobs</p>
+          <h2 className="text-2xl font-bold">Riwayat Cetak</h2>
+          <p className="text-muted-foreground">Lihat semua pekerjaan cetak sebelumnya</p>
         </div>
         
         <PrintHistory />
@@ -17,7 +17,7 @@ const History = () => {
       
       <footer className="bg-muted py-4">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} Print Utility Magic | All Rights Reserved
+          &copy; {new Date().getFullYear()} Print Utility Magic | Hak Cipta Dilindungi
         </div>
       </footer>
     </div>

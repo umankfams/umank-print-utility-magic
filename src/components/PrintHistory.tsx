@@ -8,8 +8,8 @@ import { PrintJob, PrintJobStatus } from "@/types";
 const mockHistoryJobs: PrintJob[] = [
   {
     id: "5",
-    name: "Annual Report 2023",
-    fileName: "Annual_Report_2023.pdf",
+    name: "Laporan Tahunan 2023",
+    fileName: "Laporan_Tahunan_2023.pdf",
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3 hours ago
     status: "completed",
     pages: 45,
@@ -19,8 +19,8 @@ const mockHistoryJobs: PrintJob[] = [
   },
   {
     id: "6",
-    name: "Employee Handbook",
-    fileName: "Employee_Handbook_2024.pdf",
+    name: "Panduan Karyawan",
+    fileName: "Panduan_Karyawan_2024.pdf",
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
     status: "completed",
     pages: 28,
@@ -30,8 +30,8 @@ const mockHistoryJobs: PrintJob[] = [
   },
   {
     id: "7",
-    name: "Weekly Schedule",
-    fileName: "Schedule_Week_18.docx",
+    name: "Jadwal Mingguan",
+    fileName: "Jadwal_Minggu_18.docx",
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 24 hours ago
     status: "completed",
     pages: 2,
@@ -41,8 +41,8 @@ const mockHistoryJobs: PrintJob[] = [
   },
   {
     id: "8",
-    name: "Contract Draft",
-    fileName: "Contract_Draft_v2.pdf",
+    name: "Draft Kontrak",
+    fileName: "Draft_Kontrak_v2.pdf",
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 30), // 30 hours ago
     status: "failed",
     pages: 12,
@@ -52,8 +52,8 @@ const mockHistoryJobs: PrintJob[] = [
   },
   {
     id: "9",
-    name: "Marketing Flyer",
-    fileName: "Summer_Sale_Flyer.pdf",
+    name: "Flyer Pemasaran",
+    fileName: "Flyer_Diskon_Musim_Panas.pdf",
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48), // 48 hours ago
     status: "completed",
     pages: 1,
@@ -63,8 +63,8 @@ const mockHistoryJobs: PrintJob[] = [
   },
   {
     id: "10",
-    name: "Monthly Invoice",
-    fileName: "Invoice_April_2024.pdf",
+    name: "Faktur Bulanan",
+    fileName: "Faktur_April_2024.pdf",
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 72), // 72 hours ago
     status: "completed",
     pages: 3,
@@ -77,20 +77,20 @@ const mockHistoryJobs: PrintJob[] = [
 const getStatusBadge = (status: PrintJobStatus) => {
   switch (status) {
     case "pending":
-      return <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">Pending</Badge>;
+      return <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">Menunggu</Badge>;
     case "printing":
-      return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">Printing</Badge>;
+      return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">Mencetak</Badge>;
     case "completed":
-      return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Completed</Badge>;
+      return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Selesai</Badge>;
     case "failed":
-      return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">Failed</Badge>;
+      return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">Gagal</Badge>;
     default:
-      return <Badge>Unknown</Badge>;
+      return <Badge>Tidak Diketahui</Badge>;
   }
 };
 
 const formatDate = (date: Date) => {
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat('id-ID', {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -104,18 +104,18 @@ const PrintHistory = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Clock className="text-primary" size={20} />
-          Print History
+          Riwayat Cetak
         </CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Document</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Pages</TableHead>
-              <TableHead>Copies</TableHead>
-              <TableHead>Settings</TableHead>
+              <TableHead>Dokumen</TableHead>
+              <TableHead>Tanggal</TableHead>
+              <TableHead>Halaman</TableHead>
+              <TableHead>Salinan</TableHead>
+              <TableHead>Pengaturan</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -137,10 +137,10 @@ const PrintHistory = () => {
                 <TableCell>
                   <div className="flex space-x-1">
                     <Badge variant="outline" className="text-xs">
-                      {job.color ? "Color" : "B&W"}
+                      {job.color ? "Warna" : "Hitam Putih"}
                     </Badge>
                     <Badge variant="outline" className="text-xs">
-                      {job.doubleSided ? "Double-sided" : "Single-sided"}
+                      {job.doubleSided ? "Bolak-balik" : "Satu sisi"}
                     </Badge>
                   </div>
                 </TableCell>

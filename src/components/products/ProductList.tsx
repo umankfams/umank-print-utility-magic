@@ -46,7 +46,7 @@ export const ProductList = ({
           </Button>
         </div>
         <Button onClick={onAddNew}>
-          <Plus className="mr-2 h-4 w-4" /> Add Product
+          <Plus className="mr-2 h-4 w-4" /> Tambah Produk
         </Button>
       </div>
 
@@ -66,7 +66,7 @@ export const ProductList = ({
           {products.length === 0 && (
             <div className="text-center py-10 col-span-full">
               <p className="text-muted-foreground">
-                No products found. Click "Add Product" to create one.
+                Produk tidak ditemukan. Klik "Tambah Produk" untuk membuat satu.
               </p>
             </div>
           )}
@@ -76,20 +76,20 @@ export const ProductList = ({
           <table className="w-full border-collapse">
             <thead className="bg-muted">
               <tr>
-                <th className="text-left p-3 font-medium text-sm">Name</th>
-                <th className="text-left p-3 font-medium text-sm">Cost Price</th>
-                <th className="text-left p-3 font-medium text-sm">Selling Price</th>
-                <th className="text-left p-3 font-medium text-sm">Stock</th>
-                <th className="text-left p-3 font-medium text-sm">Min Order</th>
-                <th className="text-left p-3 font-medium text-sm">Actions</th>
+                <th className="text-left p-3 font-medium text-sm">Nama</th>
+                <th className="text-left p-3 font-medium text-sm">Harga Pokok</th>
+                <th className="text-left p-3 font-medium text-sm">Harga Jual</th>
+                <th className="text-left p-3 font-medium text-sm">Stok</th>
+                <th className="text-left p-3 font-medium text-sm">Pesanan Min</th>
+                <th className="text-left p-3 font-medium text-sm">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {products.map((product) => (
                 <tr key={product.id} className="border-t">
                   <td className="p-3">{product.name}</td>
-                  <td className="p-3">${product.costPrice.toFixed(2)}</td>
-                  <td className="p-3">${product.sellingPrice.toFixed(2)}</td>
+                  <td className="p-3">Rp{product.costPrice.toLocaleString('id-ID')}</td>
+                  <td className="p-3">Rp{product.sellingPrice.toLocaleString('id-ID')}</td>
                   <td className="p-3">{product.stock}</td>
                   <td className="p-3">{product.minOrder}</td>
                   <td className="p-3">
@@ -98,10 +98,10 @@ export const ProductList = ({
                         Edit
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => onViewTasks(product)}>
-                        <FileText className="h-4 w-4 mr-1" /> Tasks
+                        <FileText className="h-4 w-4 mr-1" /> Tugas
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => onDelete(product.id)}>
-                        Delete
+                        Hapus
                       </Button>
                     </div>
                   </td>
@@ -110,7 +110,7 @@ export const ProductList = ({
               {products.length === 0 && (
                 <tr>
                   <td colSpan={6} className="text-center p-6 text-muted-foreground">
-                    No products found. Click "Add Product" to create one.
+                    Produk tidak ditemukan. Klik "Tambah Produk" untuk membuat satu.
                   </td>
                 </tr>
               )}

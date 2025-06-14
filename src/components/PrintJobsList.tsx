@@ -7,8 +7,8 @@ import { Clock, Printer, CheckCircle, AlertCircle, RefreshCcw } from "lucide-rea
 const mockPrintJobs: PrintJob[] = [
   {
     id: "1",
-    name: "Quarterly Report",
-    fileName: "Q2_Report_2023.pdf",
+    name: "Laporan Kuartalan",
+    fileName: "Laporan_Q2_2023.pdf",
     createdAt: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
     status: "printing",
     pages: 24,
@@ -18,8 +18,8 @@ const mockPrintJobs: PrintJob[] = [
   },
   {
     id: "2",
-    name: "Meeting Notes",
-    fileName: "Meeting_Notes_05_02_2024.docx",
+    name: "Catatan Rapat",
+    fileName: "Catatan_Rapat_05_02_2024.docx",
     createdAt: new Date(Date.now() - 1000 * 60 * 20), // 20 minutes ago
     status: "pending",
     pages: 3,
@@ -29,8 +29,8 @@ const mockPrintJobs: PrintJob[] = [
   },
   {
     id: "3",
-    name: "Product Brochure",
-    fileName: "Product_Brochure_2024.pdf",
+    name: "Brosur Produk",
+    fileName: "Brosur_Produk_2024.pdf",
     createdAt: new Date(Date.now() - 1000 * 60 * 35), // 35 minutes ago
     status: "completed",
     pages: 12,
@@ -40,8 +40,8 @@ const mockPrintJobs: PrintJob[] = [
   },
   {
     id: "4",
-    name: "Error Document",
-    fileName: "corrupted_file.pdf",
+    name: "Dokumen Error",
+    fileName: "file_rusak.pdf",
     createdAt: new Date(Date.now() - 1000 * 60 * 50), // 50 minutes ago
     status: "failed",
     pages: 0,
@@ -69,15 +69,15 @@ const getStatusIcon = (status: PrintJobStatus) => {
 const getStatusBadge = (status: PrintJobStatus) => {
   switch (status) {
     case "pending":
-      return <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">Pending</Badge>;
+      return <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">Menunggu</Badge>;
     case "printing":
-      return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">Printing</Badge>;
+      return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">Mencetak</Badge>;
     case "completed":
-      return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Completed</Badge>;
+      return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">Selesai</Badge>;
     case "failed":
-      return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">Failed</Badge>;
+      return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">Gagal</Badge>;
     default:
-      return <Badge>Unknown</Badge>;
+      return <Badge>Tidak Diketahui</Badge>;
   }
 };
 
@@ -85,13 +85,13 @@ const formatDate = (date: Date) => {
   const now = new Date();
   const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
   
-  if (diffInMinutes < 1) return "Just now";
-  if (diffInMinutes < 60) return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+  if (diffInMinutes < 1) return "Baru saja";
+  if (diffInMinutes < 60) return `${diffInMinutes} menit lalu`;
   
   const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+  if (diffInHours < 24) return `${diffInHours} jam lalu`;
   
-  return date.toLocaleDateString();
+  return date.toLocaleDateString('id-ID');
 };
 
 const PrintJobsList = () => {
@@ -100,13 +100,13 @@ const PrintJobsList = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Printer className="text-primary" size={20} />
-          Active Print Jobs
+          Pekerjaan Cetak Aktif
         </CardTitle>
       </CardHeader>
       <CardContent>
         {mockPrintJobs.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground">
-            No active print jobs
+            Tidak ada pekerjaan cetak aktif
           </div>
         ) : (
           <div className="space-y-4">
@@ -120,16 +120,16 @@ const PrintJobsList = () => {
                   {getStatusBadge(job.status)}
                 </div>
                 <div className="text-sm text-muted-foreground mb-3 truncate">
-                  {job.fileName} ({job.pages} page{job.pages !== 1 ? 's' : ''})
+                  {job.fileName} ({job.pages} halaman)
                 </div>
                 <div className="flex justify-between items-center text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
                     {getStatusIcon(job.status)}
                     <span>
-                      {job.status === "printing" ? "Printing now" : 
-                       job.status === "pending" ? "Waiting to print" :
-                       job.status === "completed" ? "Finished printing" :
-                       "Print failed"}
+                      {job.status === "printing" ? "Sedang mencetak" : 
+                       job.status === "pending" ? "Menunggu cetak" :
+                       job.status === "completed" ? "Selesai mencetak" :
+                       "Gagal mencetak"}
                     </span>
                   </div>
                   <div>

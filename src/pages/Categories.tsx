@@ -11,8 +11,8 @@ const Categories = () => {
       <div>
         <AppNavbar />
         <div className="container mx-auto px-4 py-8">
-          <h1 className="text-2xl font-bold">Product Categories</h1>
-          <p>Loading...</p>
+          <h1 className="text-2xl font-bold">Kategori Produk</h1>
+          <p>Memuat...</p>
         </div>
       </div>
     );
@@ -23,8 +23,8 @@ const Categories = () => {
       <div>
         <AppNavbar />
         <div className="container mx-auto px-4 py-8">
-          <h1 className="text-2xl font-bold">Product Categories</h1>
-          <p className="text-red-500">Error loading categories</p>
+          <h1 className="text-2xl font-bold">Kategori Produk</h1>
+          <p className="text-red-500">Gagal memuat kategori</p>
         </div>
       </div>
     );
@@ -35,8 +35,8 @@ const Categories = () => {
       <AppNavbar />
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Product Categories</h1>
-          <p className="text-gray-600">{categories.length} categories available</p>
+          <h1 className="text-2xl font-bold">Kategori Produk</h1>
+          <p className="text-gray-600">{categories.length} kategori tersedia</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

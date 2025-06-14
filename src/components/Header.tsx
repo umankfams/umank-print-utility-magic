@@ -12,9 +12,9 @@ const Header = () => {
           <h1 className="text-2xl font-bold">Print Utility Magic</h1>
         </Link>
         <nav className="hidden md:flex items-center space-x-6">
-          <Link to="/" className="hover:text-accent transition-colors">Dashboard</Link>
-          <Link to="/history" className="hover:text-accent transition-colors">History</Link>
-          <Link to="/settings" className="hover:text-accent transition-colors">Settings</Link>
+          <Link to="/" className="hover:text-accent transition-colors">Beranda</Link>
+          <Link to="/history" className="hover:text-accent transition-colors">Riwayat</Link>
+          <Link to="/settings" className="hover:text-accent transition-colors">Pengaturan</Link>
         </nav>
         <div className="md:hidden">
           <Button variant="ghost" size="icon">

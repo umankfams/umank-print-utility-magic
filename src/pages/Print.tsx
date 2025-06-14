@@ -9,8 +9,8 @@ const Print = () => {
       <Header />
       <main className="container mx-auto px-4 py-6 flex-grow">
         <div className="mb-4">
-          <h2 className="text-2xl font-bold">Print Center</h2>
-          <p className="text-muted-foreground">Create new print jobs and manage your printing queue</p>
+          <h2 className="text-2xl font-bold">Pusat Cetak</h2>
+          <p className="text-muted-foreground">Buat pekerjaan cetak baru dan kelola antrian pencetakan Anda</p>
         </div>
         
         <PrintJobForm />
@@ -19,7 +19,7 @@ const Print = () => {
       
       <footer className="bg-muted py-4">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} Print Utility Magic | All Rights Reserved
+          &copy; {new Date().getFullYear()} Print Utility Magic | Hak Cipta Dilindungi
         </div>
       </footer>
     </div>
