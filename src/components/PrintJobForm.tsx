@@ -8,11 +8,13 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Printer, Upload, X, Link, Cloud } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { PrintJob, PrintJobStatus } from "@/types";
+import { PrintJobStatus } from "@/types";
+import { usePrintJobs } from "@/hooks/usePrintJobs";
 import CloudDriveSelector from "./CloudDriveSelector";
 
 const PrintJobForm = () => {
   const { toast } = useToast();
+  const { createPrintJob } = usePrintJobs();
   const [jobName, setJobName] = useState("");
   const [copies, setCopies] = useState(1);
   const [color, setColor] = useState(false);
@@ -60,11 +62,10 @@ const PrintJobForm = () => {
       return;
     }
     
-    const newJob: Partial<PrintJob> = {
+    const newJob = {
       name: jobName || (file ? file.name : fileName),
       fileName: file ? file.name : fileName,
       fileUrl: fileUrl || undefined,
-      createdAt: new Date(),
       status: 'pending' as PrintJobStatus,
       pages: Math.floor(Math.random() * 10) + 1, // Mock page count
       copies: copies,
@@ -72,12 +73,7 @@ const PrintJobForm = () => {
       doubleSided: doubleSided,
     };
     
-    toast({
-      title: "Success",
-      description: "Print job created successfully!",
-    });
-    
-    console.log("Created print job:", newJob);
+    createPrintJob(newJob);
     resetForm();
   };
   
