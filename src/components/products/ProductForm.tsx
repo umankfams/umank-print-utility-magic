@@ -46,7 +46,10 @@ interface ProductFormProps {
 export const ProductForm = ({ isEditing, selectedProduct, onSubmit }: ProductFormProps) => {
   const [currentCostPrice, setCurrentCostPrice] = useState(0);
   const [calculatedSellingPrice, setCalculatedSellingPrice] = useState(0);
-  const { categories } = useProductCategories();
+  const { categories, isLoading: categoriesLoading } = useProductCategories();
+
+  console.log("Categories loaded:", categories);
+  console.log("Categories loading:", categoriesLoading);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -77,6 +80,7 @@ export const ProductForm = ({ isEditing, selectedProduct, onSubmit }: ProductFor
   }, [watchMarkupPercentage, currentCostPrice, selectedProduct, isEditing]);
 
   const handleFormSubmit = (values: ProductFormValues) => {
+    console.log("Form submitted with values:", values);
     onSubmit(values);
   };
 
@@ -117,18 +121,24 @@ export const ProductForm = ({ isEditing, selectedProduct, onSubmit }: ProductFor
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.label}
-                    </SelectItem>
-                  ))}
+                  {categoriesLoading ? (
+                    <SelectItem value="" disabled>Loading categories...</SelectItem>
+                  ) : categories.length === 0 ? (
+                    <SelectItem value="" disabled>No categories available</SelectItem>
+                  ) : (
+                    categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.label}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />
