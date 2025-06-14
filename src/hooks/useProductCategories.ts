@@ -5,9 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
-export type ProductCategory = Tables<"categories">;
-export type ProductCategoryInsert = TablesInsert<"categories">;
-export type ProductCategoryUpdate = TablesUpdate<"categories">;
+export type ProductCategory = Tables<"product_categories">;
+export type ProductCategoryInsert = TablesInsert<"product_categories">;
+export type ProductCategoryUpdate = TablesUpdate<"product_categories">;
 
 export function useProductCategories() {
   const { toast } = useToast();
@@ -18,9 +18,8 @@ export function useProductCategories() {
     queryKey: ['product-categories'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('categories')
+        .from('product_categories')
         .select('*')
-        .eq('type', 'product')
         .order('created_at', { ascending: true });
       
       if (error) throw error;
@@ -32,11 +31,8 @@ export function useProductCategories() {
   const addCategoryMutation = useMutation({
     mutationFn: async (newCategory: Omit<ProductCategoryInsert, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
-        .from('categories')
-        .insert({
-          ...newCategory,
-          type: 'product'
-        })
+        .from('product_categories')
+        .insert(newCategory)
         .select()
         .single();
       
@@ -64,7 +60,7 @@ export function useProductCategories() {
   const updateCategoryMutation = useMutation({
     mutationFn: async ({ id, ...updateData }: { id: string } & Omit<ProductCategoryUpdate, 'id' | 'updated_at'>) => {
       const { data, error } = await supabase
-        .from('categories')
+        .from('product_categories')
         .update(updateData)
         .eq('id', id)
         .select()
@@ -94,7 +90,7 @@ export function useProductCategories() {
   const deleteCategoryMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('categories')
+        .from('product_categories')
         .delete()
         .eq('id', id);
       

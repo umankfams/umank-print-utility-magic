@@ -239,6 +239,39 @@ export type Database = {
         }
         Relationships: []
       }
+      product_categories: {
+        Row: {
+          color: string
+          created_at: string
+          icon: string
+          id: string
+          is_default: boolean | null
+          key: string
+          label: string
+          updated_at: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          icon: string
+          id?: string
+          is_default?: boolean | null
+          key: string
+          label: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          is_default?: boolean | null
+          key?: string
+          label?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_ingredients: {
         Row: {
           created_at: string
