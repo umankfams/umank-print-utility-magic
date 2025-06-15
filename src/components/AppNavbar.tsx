@@ -7,7 +7,8 @@ import {
   CalendarIcon, 
   FileTextIcon,
   Package,
-  ListTodo
+  ListTodo,
+  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
@@ -32,6 +33,11 @@ const navItems = [
     name: "Pesanan",
     path: "/orders",
     icon: <ShoppingCartIcon className="h-5 w-5" />
+  },
+  {
+    name: "Pelanggan",
+    path: "/customers",
+    icon: <Users className="h-5 w-5" />
   },
   {
     name: "Tugas",
