@@ -17,12 +17,18 @@ export function useProductCategories() {
   const { data: categories = [], isLoading, error } = useQuery({
     queryKey: ['product-categories'],
     queryFn: async () => {
+      console.log('Fetching product categories...');
       const { data, error } = await supabase
         .from('product_categories')
         .select('*')
         .order('created_at', { ascending: true });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching categories:', error);
+        throw error;
+      }
+      
+      console.log('Fetched categories:', data);
       return data as ProductCategory[];
     }
   });

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -48,8 +47,9 @@ export const ProductForm = ({ isEditing, selectedProduct, onSubmit }: ProductFor
   const [calculatedSellingPrice, setCalculatedSellingPrice] = useState(0);
   const { categories, isLoading: categoriesLoading } = useProductCategories();
 
-  console.log("Categories loaded:", categories);
+  console.log("Categories in ProductForm:", categories);
   console.log("Categories loading:", categoriesLoading);
+  console.log("Categories length:", categories?.length);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -130,7 +130,7 @@ export const ProductForm = ({ isEditing, selectedProduct, onSubmit }: ProductFor
                 <SelectContent>
                   {categoriesLoading ? (
                     <SelectItem value="" disabled>Loading categories...</SelectItem>
-                  ) : categories.length === 0 ? (
+                  ) : !categories || categories.length === 0 ? (
                     <SelectItem value="" disabled>No categories available</SelectItem>
                   ) : (
                     categories.map((category) => (
