@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Filter, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { Plus, Search, Filter, TrendingUp, TrendingDown, DollarSign, Settings } from "lucide-react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { formatCurrency } from "@/lib/utils";
 import Header from "@/components/Header";
 import TransactionDialog from "@/components/finance/TransactionDialog";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 const Finance = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -135,13 +135,21 @@ const Finance = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Pencatat Keuangan</h1>
-          <Button 
-            onClick={() => setIsDialogOpen(true)}
-            className="bg-primary hover:bg-primary/90"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Tambah Transaksi
-          </Button>
+          <div className="flex gap-2">
+            <Link to="/category-management">
+              <Button variant="outline" size="sm">
+                <Settings className="h-4 w-4 mr-2" />
+                Kelola Kategori
+              </Button>
+            </Link>
+            <Button 
+              onClick={() => setIsDialogOpen(true)}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Tambah Transaksi
+            </Button>
+          </div>
         </div>
 
         {/* Summary Cards */}
