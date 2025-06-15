@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { 
   PackageIcon, 
@@ -53,11 +52,6 @@ const navItems = [
   {
     name: "Kategori",
     path: "/categories",
-    icon: <ClipboardListIcon className="h-5 w-5" />
-  },
-  {
-    name: "Kel. Kategori",
-    path: "/category-management", 
     icon: <ClipboardListIcon className="h-5 w-5" />
   }
 ];
