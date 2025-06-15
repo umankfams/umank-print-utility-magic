@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -128,11 +127,14 @@ export const ProductForm = ({
     onSubmit(values);
   };
 
-  const handleAddIngredient = (values: IngredientFormValues) => {
-    console.log("Adding ingredient:", values);
-    onAddIngredient(values);
-    ingredientForm.reset();
-    setShowIngredientForm(false);
+  const handleAddIngredient = (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent form submission
+    ingredientForm.handleSubmit((values) => {
+      console.log("Adding ingredient:", values);
+      onAddIngredient(values);
+      ingredientForm.reset();
+      setShowIngredientForm(false);
+    })(e);
   };
 
   return (
@@ -270,7 +272,7 @@ export const ProductForm = ({
             {/* Add Ingredient Form */}
             {showIngredientForm && (
               <Form {...ingredientForm}>
-                <form onSubmit={ingredientForm.handleSubmit(handleAddIngredient)} className="bg-muted p-4 rounded-md space-y-4">
+                <div className="bg-muted p-4 rounded-md space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={ingredientForm.control}
@@ -329,12 +331,12 @@ export const ProductForm = ({
                   </div>
 
                   <div className="flex gap-2">
-                    <Button type="submit" size="sm">Add Ingredient</Button>
+                    <Button type="button" size="sm" onClick={handleAddIngredient}>Add Ingredient</Button>
                     <Button type="button" variant="outline" size="sm" onClick={() => setShowIngredientForm(false)}>
                       Cancel
                     </Button>
                   </div>
-                </form>
+                </div>
               </Form>
             )}
 
