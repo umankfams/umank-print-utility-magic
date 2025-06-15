@@ -181,9 +181,9 @@ export const ProductForm = ({
                   </FormControl>
                   <SelectContent>
                     {categoriesLoading ? (
-                      <SelectItem value="" disabled>Loading categories...</SelectItem>
+                      <SelectItem value="loading" disabled>Loading categories...</SelectItem>
                     ) : !categories || categories.length === 0 ? (
-                      <SelectItem value="" disabled>No categories available</SelectItem>
+                      <SelectItem value="no-categories" disabled>No categories available</SelectItem>
                     ) : (
                       categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
@@ -285,11 +285,15 @@ export const ProductForm = ({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {ingredients.map((ingredient) => (
-                                <SelectItem key={ingredient.id} value={ingredient.id}>
-                                  {ingredient.name} - {formatCurrency(ingredient.pricePerUnit)}/{ingredient.unit}
-                                </SelectItem>
-                              ))}
+                              {ingredients.length === 0 ? (
+                                <SelectItem value="no-ingredients" disabled>No ingredients available</SelectItem>
+                              ) : (
+                                ingredients.map((ingredient) => (
+                                  <SelectItem key={ingredient.id} value={ingredient.id}>
+                                    {ingredient.name} - {formatCurrency(ingredient.pricePerUnit)}/{ingredient.unit}
+                                  </SelectItem>
+                                ))
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />
