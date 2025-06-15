@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -74,15 +75,22 @@ export const ProductForm = ({
   console.log("Categories length:", categories?.length);
   console.log("Product ingredients:", productIngredients);
 
+  // Calculate initial markup percentage safely
+  const getInitialMarkupPercentage = () => {
+    if (isEditing && selectedProduct && selectedProduct.costPrice > 0) {
+      const markup = Math.round(((selectedProduct.sellingPrice - selectedProduct.costPrice) / selectedProduct.costPrice) * 100);
+      return isNaN(markup) ? 30 : markup;
+    }
+    return 30;
+  };
+
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: selectedProduct?.name || "",
       description: selectedProduct?.description || "",
       categoryId: selectedProduct?.categoryId || "",
-      markupPercentage: isEditing && selectedProduct
-        ? Math.round(((selectedProduct.sellingPrice - selectedProduct.costPrice) / selectedProduct.costPrice) * 100)
-        : 30,
+      markupPercentage: getInitialMarkupPercentage(),
       stock: selectedProduct?.stock || 0,
       minOrder: selectedProduct?.minOrder || 1,
     },
@@ -103,13 +111,13 @@ export const ProductForm = ({
   useEffect(() => {
     if (productIngredients && productIngredients.length > 0) {
       const totalCost = productIngredients.reduce((sum, item) => {
-        if (item.ingredient) {
+        if (item.ingredient && !isNaN(item.ingredient.pricePerUnit) && !isNaN(item.quantity)) {
           return sum + (item.quantity * item.ingredient.pricePerUnit);
         }
         return sum;
       }, 0);
       setCalculatedCostPrice(totalCost);
-    } else if (isEditing && selectedProduct) {
+    } else if (isEditing && selectedProduct && !isNaN(selectedProduct.costPrice)) {
       setCalculatedCostPrice(selectedProduct.costPrice);
     } else {
       setCalculatedCostPrice(0);
@@ -118,8 +126,9 @@ export const ProductForm = ({
 
   // Update calculated selling price when markup percentage or cost price changes
   useEffect(() => {
-    const sellingPrice = calculateSellingPrice(calculatedCostPrice, watchMarkupPercentage);
-    setCalculatedSellingPrice(sellingPrice);
+    const markup = isNaN(watchMarkupPercentage) ? 30 : watchMarkupPercentage;
+    const sellingPrice = calculateSellingPrice(calculatedCostPrice, markup);
+    setCalculatedSellingPrice(isNaN(sellingPrice) ? 0 : sellingPrice);
   }, [watchMarkupPercentage, calculatedCostPrice]);
 
   const handleFormSubmit = (values: ProductFormValues) => {
@@ -222,6 +231,7 @@ export const ProductForm = ({
                     />
                   </FormControl>
                   <FormMessage />
+                </FormIte>
                 </FormItem>
               )}
             />
@@ -386,10 +396,10 @@ export const ProductForm = ({
               name="markupPercentage"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Markup Percentage: {field.value}%</FormLabel>
+                  <FormLabel>Markup Percentage: {isNaN(field.value) ? 30 : field.value}%</FormLabel>
                   <FormControl>
                     <Slider
-                      defaultValue={[field.value]}
+                      defaultValue={[isNaN(field.value) ? 30 : field.value]}
                       min={0}
                       max={300}
                       step={1}
