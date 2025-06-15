@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Dialog,
@@ -11,7 +10,7 @@ import { useIngredients } from "@/hooks/useIngredients";
 import { Product, TaskPriority } from "@/types";
 import { calculateSellingPrice } from "@/lib/utils";
 import { ProductList } from "@/components/products/ProductList";
-import { IntegratedProductForm } from "@/components/products/IntegratedProductForm";
+import { ProductForm } from "@/components/products/ProductForm";
 import { TaskDialog } from "@/components/products/TaskDialog";
 import { LayoutGrid, LayoutList } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,10 +48,20 @@ const Products = () => {
   };
 
   const handleSubmit = (values: any) => {
-    const effectiveSellingPrice = calculateSellingPrice(
-      isEditing && selectedProduct ? selectedProduct.costPrice : 0,
-      values.markupPercentage
-    );
+    // Calculate cost price from current ingredients if not editing
+    let costPrice = 0;
+    if (isEditing && selectedProduct) {
+      costPrice = selectedProduct.costPrice;
+    } else if (productWithDetails?.ingredients) {
+      costPrice = productWithDetails.ingredients.reduce((sum, item) => {
+        if (item.ingredient) {
+          return sum + (item.quantity * item.ingredient.pricePerUnit);
+        }
+        return sum;
+      }, 0);
+    }
+
+    const effectiveSellingPrice = calculateSellingPrice(costPrice, values.markupPercentage);
     
     if (isEditing && selectedProduct) {
       updateProduct({
@@ -60,7 +69,7 @@ const Products = () => {
         name: values.name,
         description: values.description,
         categoryId: values.categoryId,
-        costPrice: selectedProduct.costPrice, // Keep the cost price from server
+        costPrice: costPrice,
         sellingPrice: effectiveSellingPrice,
         stock: values.stock || 0,
         minOrder: values.minOrder || 1,
@@ -70,7 +79,7 @@ const Products = () => {
         name: values.name,
         description: values.description,
         categoryId: values.categoryId,
-        costPrice: 0, // Cost price will be calculated on the server
+        costPrice: costPrice,
         sellingPrice: effectiveSellingPrice,
         stock: values.stock || 0,
         minOrder: values.minOrder || 1,
@@ -196,25 +205,20 @@ const Products = () => {
           />
         )}
 
-        {/* Integrated Product Form Dialog */}
+        {/* Product Form Dialog */}
         <Dialog open={openProductDialog} onOpenChange={setOpenProductDialog}>
-          <DialogContent className="sm:max-w-[700px]">
+          <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
             <DialogTitle>
               {isEditing ? "Edit Product" : "Add Product"}
             </DialogTitle>
-            {selectedProduct || !isEditing ? (
-              <IntegratedProductForm
-                isEditing={isEditing}
-                selectedProduct={selectedProduct}
-                ingredients={ingredients}
-                productIngredients={productWithDetails?.ingredients || []}
-                onSubmit={handleSubmit}
-                onAddIngredient={handleAddIngredient}
-                onRemoveIngredient={handleRemoveIngredient}
-              />
-            ) : (
-              <p>Loading product details...</p>
-            )}
+            <ProductForm
+              isEditing={isEditing}
+              selectedProduct={selectedProduct}
+              productIngredients={productWithDetails?.ingredients || []}
+              onSubmit={handleSubmit}
+              onAddIngredient={handleAddIngredient}
+              onRemoveIngredient={handleRemoveIngredient}
+            />
           </DialogContent>
         </Dialog>
 
