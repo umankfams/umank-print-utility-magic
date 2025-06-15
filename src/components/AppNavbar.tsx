@@ -8,7 +8,8 @@ import {
   FileTextIcon,
   Package,
   ListTodo,
-  Users
+  Users,
+  DollarSign
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
@@ -38,6 +39,11 @@ const navItems = [
     name: "Pelanggan",
     path: "/customers",
     icon: <Users className="h-5 w-5" />
+  },
+  {
+    name: "Keuangan",
+    path: "/finance",
+    icon: <DollarSign className="h-5 w-5" />
   },
   {
     name: "Tugas",
