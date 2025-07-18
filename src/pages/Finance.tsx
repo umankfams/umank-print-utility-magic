@@ -25,7 +25,7 @@ const Finance = () => {
     queryKey: ['transactions'],
     queryFn: async () => {
       console.log('Fetching transactions from API...');
-      const response = await fetch(`${API_BASE_URL}/transaction`, {
+      const response = await fetch(`${API_BASE_URL}/transactions`, {
         headers: {
           'ngrok-skip-browser-warning': 'true',
           'Content-Type': 'application/json',

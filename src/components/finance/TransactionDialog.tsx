@@ -70,7 +70,7 @@ const TransactionDialog = ({
     try {
       console.log('Submitting transaction:', data);
       
-      const response = await fetch(`${apiBaseUrl}/transaction`, {
+      const response = await fetch(`${apiBaseUrl}/transactions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
