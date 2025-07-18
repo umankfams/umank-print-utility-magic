@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +12,7 @@ import TransactionDialog from "@/components/finance/TransactionDialog";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 
-const API_BASE_URL = "https://373b-114-10-139-244.ngrok-free.app";
+const API_BASE_URL = "https://373b-114-10-139-244.ngrok-free.app/api";
 
 const Finance = () => {
   const [searchTerm, setSearchTerm] = useState("");
