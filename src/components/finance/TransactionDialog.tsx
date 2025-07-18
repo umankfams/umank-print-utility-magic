@@ -75,6 +75,7 @@ const TransactionDialog = ({
         headers: {
           'Content-Type': 'application/json',
           'ngrok-skip-browser-warning': 'true',
+          'Authorization': 'Bearer 208|PWZoKH20GUkwbNluBWM2h25h4rOtFzmwx8PfOaYRa8a9b2e1',
         },
         body: JSON.stringify({
           description: data.description,

@@ -29,6 +29,7 @@ const Finance = () => {
         headers: {
           'ngrok-skip-browser-warning': 'true',
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer 208|PWZoKH20GUkwbNluBWM2h25h4rOtFzmwx8PfOaYRa8a9b2e1',
         }
       });
       
@@ -50,6 +51,7 @@ const Finance = () => {
         headers: {
           'ngrok-skip-browser-warning': 'true',
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer 208|PWZoKH20GUkwbNluBWM2h25h4rOtFzmwx8PfOaYRa8a9b2e1',
         }
       });
       
