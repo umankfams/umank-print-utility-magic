@@ -21,7 +21,7 @@ const Finance = () => {
   const [selectedType, setSelectedType] = useState<string>("all");
   const { toast } = useToast();
 
-  const { data: transactions = [] } = useQuery({
+  const { data: transactions = [], error: transactionsError } = useQuery({
     queryKey: ['transactions'],
     queryFn: async () => {
       console.log('Fetching transactions from API...');
@@ -39,11 +39,13 @@ const Finance = () => {
       
       const data = await response.json();
       console.log('Fetched transactions:', data);
+      console.log('Transactions is array:', Array.isArray(data));
       return data;
-    }
+    },
+    retry: false
   });
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [], error: categoriesError } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
       console.log('Fetching categories from API...');
@@ -61,26 +63,35 @@ const Finance = () => {
       
       const data = await response.json();
       console.log('Fetched categories:', data);
+      console.log('Categories is array:', Array.isArray(data));
       return data;
-    }
+    },
+    retry: false
   });
 
-  // Calculate totals
-  const totalIncome = transactions
+  // Ensure data is always an array
+  const safeTransactions = Array.isArray(transactions) ? transactions : [];
+  const safeCategories = Array.isArray(categories) ? categories : [];
+  
+  console.log('Safe transactions:', safeTransactions, 'Type:', typeof safeTransactions);
+  console.log('Safe categories:', safeCategories, 'Type:', typeof safeCategories);
+
+  // Calculate totals using safe arrays
+  const totalIncome = safeTransactions
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
-  const totalExpense = transactions
+  const totalExpense = safeTransactions
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
   const balance = totalIncome - totalExpense;
 
-  // Prepare chart data
-  const expenseByCategory = categories
+  // Prepare chart data using safe arrays
+  const expenseByCategory = safeCategories
     .filter(cat => cat.type === 'expense')
     .map(cat => {
-      const total = transactions
+      const total = safeTransactions
         .filter(t => t.type === 'expense' && t.category === cat.key)
         .reduce((sum, t) => sum + Number(t.amount), 0);
       return {
@@ -91,10 +102,10 @@ const Finance = () => {
     })
     .filter(item => item.value > 0);
 
-  const incomeByCategory = categories
+  const incomeByCategory = safeCategories
     .filter(cat => cat.type === 'income')
     .map(cat => {
-      const total = transactions
+      const total = safeTransactions
         .filter(t => t.type === 'income' && t.category === cat.key)
         .reduce((sum, t) => sum + Number(t.amount), 0);
       return {
@@ -105,8 +116,8 @@ const Finance = () => {
     })
     .filter(item => item.value > 0);
 
-  // Monthly data for bar chart
-  const monthlyData = transactions.reduce((acc: any, transaction) => {
+  // Monthly data for bar chart using safe arrays
+  const monthlyData = safeTransactions.reduce((acc: any, transaction) => {
     const date = new Date(transaction.date);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     
@@ -125,8 +136,8 @@ const Finance = () => {
 
   const chartData = Object.values(monthlyData).slice(-6);
 
-  // Filter transactions
-  const filteredTransactions = transactions.filter(transaction => {
+  // Filter transactions using safe arrays
+  const filteredTransactions = safeTransactions.filter(transaction => {
     const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || transaction.category === selectedCategory;
     const matchesType = selectedType === 'all' || transaction.type === selectedType;
@@ -135,7 +146,7 @@ const Finance = () => {
   });
 
   const getCategoryInfo = (categoryKey: string) => {
-    return categories.find(cat => cat.key === categoryKey);
+    return safeCategories.find(cat => cat.key === categoryKey);
   };
 
   const handleTransactionAdded = () => {
@@ -317,7 +328,7 @@ const Finance = () => {
                   className="px-3 py-2 border border-input rounded-md bg-background"
                 >
                   <option value="all">Semua Kategori</option>
-                  {categories.map((category) => (
+                  {safeCategories.map((category) => (
                     <option key={category.id} value={category.key}>
                       {category.label}
                     </option>
@@ -383,7 +394,7 @@ const Finance = () => {
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         onTransactionAdded={handleTransactionAdded}
-        categories={categories}
+        categories={safeCategories}
         apiBaseUrl={API_BASE_URL}
       />
     </div>
