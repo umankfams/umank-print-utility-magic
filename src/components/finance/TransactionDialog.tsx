@@ -21,7 +21,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
 const transactionSchema = z.object({
@@ -39,6 +38,7 @@ interface TransactionDialogProps {
   onOpenChange: (open: boolean) => void;
   onTransactionAdded: () => void;
   categories: any[];
+  apiBaseUrl: string;
 }
 
 const TransactionDialog = ({
@@ -46,6 +46,7 @@ const TransactionDialog = ({
   onOpenChange,
   onTransactionAdded,
   categories,
+  apiBaseUrl,
 }: TransactionDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
@@ -67,17 +68,29 @@ const TransactionDialog = ({
   const onSubmit = async (data: TransactionFormData) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from('transactions')
-        .insert([{
+      console.log('Submitting transaction:', data);
+      
+      const response = await fetch(`${apiBaseUrl}/transaction`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: JSON.stringify({
           description: data.description,
           amount: data.amount,
           date: data.date,
           type: data.type,
           category: data.category,
-        }]);
+        }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error(`Failed to create transaction: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log('Transaction created:', result);
 
       await queryClient.invalidateQueries({ queryKey: ['transactions'] });
       form.reset();

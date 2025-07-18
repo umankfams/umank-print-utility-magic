@@ -1,6 +1,6 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,8 @@ import TransactionDialog from "@/components/finance/TransactionDialog";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 
+const API_BASE_URL = "https://373b-114-10-139-244.ngrok-free.app";
+
 const Finance = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -23,12 +25,20 @@ const Finance = () => {
   const { data: transactions = [] } = useQuery({
     queryKey: ['transactions'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .order('date', { ascending: false });
+      console.log('Fetching transactions from API...');
+      const response = await fetch(`${API_BASE_URL}/transaction`, {
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+          'Content-Type': 'application/json',
+        }
+      });
       
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error(`Failed to fetch transactions: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Fetched transactions:', data);
       return data;
     }
   });
@@ -36,12 +46,20 @@ const Finance = () => {
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('label');
+      console.log('Fetching categories from API...');
+      const response = await fetch(`${API_BASE_URL}/finance-categories`, {
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+          'Content-Type': 'application/json',
+        }
+      });
       
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error(`Failed to fetch categories: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Fetched categories:', data);
       return data;
     }
   });
@@ -365,6 +383,7 @@ const Finance = () => {
         onOpenChange={setIsDialogOpen}
         onTransactionAdded={handleTransactionAdded}
         categories={categories}
+        apiBaseUrl={API_BASE_URL}
       />
     </div>
   );
