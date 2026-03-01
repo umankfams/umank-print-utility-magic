@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 export const useCustomers = () => {
   const queryClient = useQueryClient();
   
-  // Get all customers from Supabase
   const { data: customers = [], isLoading, error } = useQuery({
     queryKey: ['customers'],
     queryFn: async () => {
@@ -17,7 +16,7 @@ export const useCustomers = () => {
       
       if (error) throw error;
       
-      return data.map(customer => ({
+      return (data || []).map(customer => ({
         ...customer,
         id: customer.id,
         isActive: customer.is_active,
@@ -27,7 +26,6 @@ export const useCustomers = () => {
     }
   });
   
-  // Create customer
   const createCustomer = useMutation({
     mutationFn: async (customer: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>) => {
       const { data, error } = await supabase
@@ -48,7 +46,6 @@ export const useCustomers = () => {
       
       return {
         ...data,
-        id: data.id,
         isActive: data.is_active,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at)
@@ -59,7 +56,6 @@ export const useCustomers = () => {
     }
   });
   
-  // Update customer
   const updateCustomer = useMutation({
     mutationFn: async (customer: Partial<Customer> & { id: string }) => {
       const { data, error } = await supabase
@@ -81,7 +77,6 @@ export const useCustomers = () => {
       
       return {
         ...data,
-        id: data.id,
         isActive: data.is_active,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at)
@@ -92,7 +87,6 @@ export const useCustomers = () => {
     }
   });
   
-  // Delete customer
   const deleteCustomer = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -101,7 +95,6 @@ export const useCustomers = () => {
         .eq('id', id);
       
       if (error) throw error;
-      
       return id;
     },
     onSuccess: () => {
