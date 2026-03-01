@@ -1,18 +1,17 @@
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Filter, TrendingUp, TrendingDown, DollarSign, Settings } from "lucide-react";
+import { Plus, Search, TrendingUp, TrendingDown, DollarSign, Settings } from "lucide-react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { formatCurrency } from "@/lib/utils";
 import Header from "@/components/Header";
 import TransactionDialog from "@/components/finance/TransactionDialog";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
-
-const API_BASE_URL = "https://373b-114-10-139-244.ngrok-free.app/api";
+import { supabase } from "@/integrations/supabase/client";
 
 const Finance = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -20,136 +19,90 @@ const Finance = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedType, setSelectedType] = useState<string>("all");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const { data: transactions = [], error: transactionsError } = useQuery({
+  const { data: transactions = [] } = useQuery({
     queryKey: ['transactions'],
     queryFn: async () => {
-      console.log('Fetching transactions from API...');
-      const response = await fetch(`${API_BASE_URL}/transactions`, {
-        headers: {
-          'ngrok-skip-browser-warning': 'true',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer 208|PWZoKH20GUkwbNluBWM2h25h4rOtFzmwx8PfOaYRa8a9b2e1',
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch transactions: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      console.log('Fetched transactions:', data);
-      console.log('Transactions is array:', Array.isArray(data));
-      return data;
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .order('date', { ascending: false });
+      if (error) throw error;
+      return data || [];
     },
-    retry: false
   });
 
-  const { data: categories = [], error: categoriesError } = useQuery({
-    queryKey: ['categories'],
+  const { data: categories = [] } = useQuery({
+    queryKey: ['finance_categories'],
     queryFn: async () => {
-      console.log('Fetching categories from API...');
-      const response = await fetch(`${API_BASE_URL}/finance-categories`, {
-        headers: {
-          'ngrok-skip-browser-warning': 'true',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer 208|PWZoKH20GUkwbNluBWM2h25h4rOtFzmwx8PfOaYRa8a9b2e1',
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch categories: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      console.log('Fetched categories:', data);
-      console.log('Categories is array:', Array.isArray(data));
-      return data;
+      const { data, error } = await supabase
+        .from('finance_categories')
+        .select('*')
+        .order('label');
+      if (error) throw error;
+      return data || [];
     },
-    retry: false
   });
 
-  // Ensure data is always an array
-  const safeTransactions = Array.isArray(transactions) ? transactions : [];
-  const safeCategories = Array.isArray(categories) ? categories : [];
-  
-  console.log('Safe transactions:', safeTransactions, 'Type:', typeof safeTransactions);
-  console.log('Safe categories:', safeCategories, 'Type:', typeof safeCategories);
-
-  // Calculate totals using safe arrays
-  const totalIncome = safeTransactions
+  // Calculate totals
+  const totalIncome = transactions
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
-  const totalExpense = safeTransactions
+  const totalExpense = transactions
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + Number(t.amount), 0);
 
   const balance = totalIncome - totalExpense;
 
-  // Prepare chart data using safe arrays
-  const expenseByCategory = safeCategories
+  // Prepare chart data
+  const expenseByCategory = categories
     .filter(cat => cat.type === 'expense')
     .map(cat => {
-      const total = safeTransactions
+      const total = transactions
         .filter(t => t.type === 'expense' && t.category === cat.key)
         .reduce((sum, t) => sum + Number(t.amount), 0);
-      return {
-        name: cat.label,
-        value: total,
-        color: cat.color
-      };
+      return { name: cat.label, value: total, color: cat.color };
     })
     .filter(item => item.value > 0);
 
-  const incomeByCategory = safeCategories
+  const incomeByCategory = categories
     .filter(cat => cat.type === 'income')
     .map(cat => {
-      const total = safeTransactions
+      const total = transactions
         .filter(t => t.type === 'income' && t.category === cat.key)
         .reduce((sum, t) => sum + Number(t.amount), 0);
-      return {
-        name: cat.label,
-        value: total,
-        color: cat.color
-      };
+      return { name: cat.label, value: total, color: cat.color };
     })
     .filter(item => item.value > 0);
 
-  // Monthly data for bar chart using safe arrays
-  const monthlyData = safeTransactions.reduce((acc: any, transaction) => {
+  // Monthly data for bar chart
+  const monthlyData = transactions.reduce((acc: any, transaction) => {
     const date = new Date(transaction.date);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    
-    if (!acc[monthKey]) {
-      acc[monthKey] = { month: monthKey, income: 0, expense: 0 };
-    }
-    
-    if (transaction.type === 'income') {
-      acc[monthKey].income += Number(transaction.amount);
-    } else {
-      acc[monthKey].expense += Number(transaction.amount);
-    }
-    
+    if (!acc[monthKey]) acc[monthKey] = { month: monthKey, income: 0, expense: 0 };
+    if (transaction.type === 'income') acc[monthKey].income += Number(transaction.amount);
+    else acc[monthKey].expense += Number(transaction.amount);
     return acc;
   }, {});
 
   const chartData = Object.values(monthlyData).slice(-6);
 
-  // Filter transactions using safe arrays
-  const filteredTransactions = safeTransactions.filter(transaction => {
+  // Filter transactions
+  const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || transaction.category === selectedCategory;
     const matchesType = selectedType === 'all' || transaction.type === selectedType;
-    
     return matchesSearch && matchesCategory && matchesType;
   });
 
   const getCategoryInfo = (categoryKey: string) => {
-    return safeCategories.find(cat => cat.key === categoryKey);
+    return categories.find(cat => cat.key === categoryKey);
   };
 
   const handleTransactionAdded = () => {
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
     toast({
       title: "Transaksi berhasil ditambahkan",
       description: "Transaksi baru telah disimpan ke database.",
@@ -223,7 +176,6 @@ const Finance = () => {
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Expense Breakdown */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Expense Breakdown</CardTitle>
@@ -231,14 +183,7 @@ const Finance = () => {
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
-                  <Pie
-                    data={expenseByCategory}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={80}
-                    dataKey="value"
-                  >
+                  <Pie data={expenseByCategory} cx="50%" cy="50%" innerRadius={40} outerRadius={80} dataKey="value">
                     {expenseByCategory.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
@@ -249,7 +194,6 @@ const Finance = () => {
             </CardContent>
           </Card>
 
-          {/* Income Breakdown */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Income Breakdown</CardTitle>
@@ -257,14 +201,7 @@ const Finance = () => {
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
-                  <Pie
-                    data={incomeByCategory}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={80}
-                    dataKey="value"
-                  >
+                  <Pie data={incomeByCategory} cx="50%" cy="50%" innerRadius={40} outerRadius={80} dataKey="value">
                     {incomeByCategory.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
@@ -275,7 +212,6 @@ const Finance = () => {
             </CardContent>
           </Card>
 
-          {/* Monthly Trend */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Tren Bulanan</CardTitle>
@@ -299,8 +235,6 @@ const Finance = () => {
           <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <CardTitle className="text-xl">Transaksi</CardTitle>
-              
-              {/* Filters */}
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <div className="relative">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -311,7 +245,6 @@ const Finance = () => {
                     className="pl-8 w-full sm:w-64"
                   />
                 </div>
-                
                 <select
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
@@ -321,14 +254,13 @@ const Finance = () => {
                   <option value="income">Pemasukan</option>
                   <option value="expense">Pengeluaran</option>
                 </select>
-                
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
                   className="px-3 py-2 border border-input rounded-md bg-background"
                 >
                   <option value="all">Semua Kategori</option>
-                  {safeCategories.map((category) => (
+                  {categories.map((category) => (
                     <option key={category.id} value={category.key}>
                       {category.label}
                     </option>
@@ -357,15 +289,11 @@ const Finance = () => {
                         <p className="font-medium text-gray-900">{transaction.description}</p>
                         <p className="text-sm text-gray-500">
                           {new Date(transaction.date).toLocaleDateString('id-ID', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
+                            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
                           })}
                         </p>
                       </div>
                     </div>
-                    
                     <div className="flex items-center space-x-3">
                       <Badge variant={categoryInfo?.type === 'income' ? 'default' : 'destructive'}>
                         {categoryInfo?.label || transaction.category}
@@ -379,7 +307,6 @@ const Finance = () => {
                   </div>
                 );
               })}
-              
               {filteredTransactions.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   Tidak ada transaksi yang ditemukan
@@ -394,8 +321,7 @@ const Finance = () => {
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         onTransactionAdded={handleTransactionAdded}
-        categories={safeCategories}
-        apiBaseUrl={API_BASE_URL}
+        categories={categories}
       />
     </div>
   );
