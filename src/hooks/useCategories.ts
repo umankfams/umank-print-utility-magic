@@ -1,43 +1,39 @@
 
-import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
-export type Category = Tables<"categories">;
-export type CategoryInsert = TablesInsert<"categories">;
-export type CategoryUpdate = TablesUpdate<"categories">;
+export interface Category {
+  id: string;
+  key: string;
+  label: string;
+  icon: string;
+  color: string;
+  type: string;
+  created_at: string;
+}
 
 export function useCategories() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch categories from Supabase
   const { data: categories = [], isLoading, error } = useQuery({
-    queryKey: ['categories'],
+    queryKey: ['finance_categories'],
     queryFn: async () => {
-      console.log('Fetching categories...');
       const { data, error } = await supabase
-        .from('categories')
+        .from('finance_categories')
         .select('*')
         .order('created_at', { ascending: true });
       
-      if (error) {
-        console.error('Error fetching categories:', error);
-        throw error;
-      }
-      
-      console.log('Fetched categories:', data);
+      if (error) throw error;
       return data as Category[];
     }
   });
 
-  // Add category mutation
   const addCategoryMutation = useMutation({
-    mutationFn: async (newCategory: Omit<CategoryInsert, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (newCategory: Omit<Category, 'id' | 'created_at'>) => {
       const { data, error } = await supabase
-        .from('categories')
+        .from('finance_categories')
         .insert(newCategory)
         .select()
         .single();
@@ -46,27 +42,18 @@ export function useCategories() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast({
-        title: "Berhasil",
-        description: "Kategori berhasil ditambahkan"
-      });
+      queryClient.invalidateQueries({ queryKey: ['finance_categories'] });
+      toast({ title: "Berhasil", description: "Kategori berhasil ditambahkan" });
     },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Gagal menambahkan kategori",
-        variant: "destructive"
-      });
-      console.error('Error adding category:', error);
+    onError: () => {
+      toast({ title: "Error", description: "Gagal menambahkan kategori", variant: "destructive" });
     }
   });
 
-  // Update category mutation
   const updateCategoryMutation = useMutation({
-    mutationFn: async ({ id, ...updateData }: { id: string } & Omit<CategoryUpdate, 'id' | 'updated_at'>) => {
+    mutationFn: async ({ id, ...updateData }: { id: string } & Partial<Omit<Category, 'id' | 'created_at'>>) => {
       const { data, error } = await supabase
-        .from('categories')
+        .from('finance_categories')
         .update(updateData)
         .eq('id', id)
         .select()
@@ -76,54 +63,37 @@ export function useCategories() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast({
-        title: "Berhasil",
-        description: "Kategori berhasil diperbarui"
-      });
+      queryClient.invalidateQueries({ queryKey: ['finance_categories'] });
+      toast({ title: "Berhasil", description: "Kategori berhasil diperbarui" });
     },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Gagal memperbarui kategori",
-        variant: "destructive"
-      });
-      console.error('Error updating category:', error);
+    onError: () => {
+      toast({ title: "Error", description: "Gagal memperbarui kategori", variant: "destructive" });
     }
   });
 
-  // Delete category mutation
   const deleteCategoryMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('categories')
+        .from('finance_categories')
         .delete()
         .eq('id', id);
       
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast({
-        title: "Berhasil",
-        description: "Kategori berhasil dihapus"
-      });
+      queryClient.invalidateQueries({ queryKey: ['finance_categories'] });
+      toast({ title: "Berhasil", description: "Kategori berhasil dihapus" });
     },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Gagal menghapus kategori",
-        variant: "destructive"
-      });
-      console.error('Error deleting category:', error);
+    onError: () => {
+      toast({ title: "Error", description: "Gagal menghapus kategori", variant: "destructive" });
     }
   });
 
-  const addCategory = (newCategory: Omit<CategoryInsert, 'id' | 'created_at' | 'updated_at'>) => {
+  const addCategory = (newCategory: Omit<Category, 'id' | 'created_at'>) => {
     addCategoryMutation.mutate(newCategory);
   };
 
-  const updateCategory = (id: string, updatedCategory: Omit<CategoryUpdate, 'id' | 'updated_at'>) => {
+  const updateCategory = (id: string, updatedCategory: Partial<Omit<Category, 'id' | 'created_at'>>) => {
     updateCategoryMutation.mutate({ id, ...updatedCategory });
   };
 
