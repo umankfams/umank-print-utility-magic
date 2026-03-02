@@ -258,23 +258,35 @@ export type Database = {
       }
       product_categories: {
         Row: {
+          color: string | null
           created_at: string
           description: string | null
+          icon: string | null
           id: string
+          key: string | null
+          label: string | null
           name: string
           updated_at: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           description?: string | null
+          icon?: string | null
           id?: string
+          key?: string | null
+          label?: string | null
           name: string
           updated_at?: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           description?: string | null
+          icon?: string | null
           id?: string
+          key?: string | null
+          label?: string | null
           name?: string
           updated_at?: string
         }
