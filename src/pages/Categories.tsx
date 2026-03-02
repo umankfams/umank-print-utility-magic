@@ -47,10 +47,11 @@ const Categories = () => {
   };
 
   const handleSave = (categoryData: { key: string; label: string; icon: string; color: string }) => {
+    const dataWithName = { ...categoryData, name: categoryData.label || categoryData.key };
     if (editingCategory) {
-      updateCategory(editingCategory.id, categoryData);
+      updateCategory(editingCategory.id, dataWithName);
     } else {
-      addCategory(categoryData);
+      addCategory(dataWithName);
     }
     setEditingCategory(undefined);
   };

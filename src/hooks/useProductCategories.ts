@@ -38,7 +38,7 @@ export function useProductCategories() {
     mutationFn: async (newCategory: Omit<ProductCategoryInsert, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
         .from('product_categories')
-        .insert(newCategory)
+        .insert({ ...newCategory, name: newCategory.label || newCategory.key || '' })
         .select()
         .single();
       
