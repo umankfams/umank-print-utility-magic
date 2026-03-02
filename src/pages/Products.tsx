@@ -7,10 +7,10 @@ import {
 import AppNavbar from "@/components/AppNavbar";
 import { useProducts } from "@/hooks/useProducts";
 import { useIngredients } from "@/hooks/useIngredients";
-import { Product, TaskPriority } from "@/types";
+import { Product } from "@/types";
 import { calculateSellingPrice } from "@/lib/utils";
 import { ProductList } from "@/components/products/ProductList";
-import { ProductForm } from "@/components/products/ProductForm";
+import { ProductForm, ProductFormSubmitData } from "@/components/products/ProductForm";
 import { TaskDialog } from "@/components/products/TaskDialog";
 import { LayoutGrid, LayoutList } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -47,42 +47,66 @@ const Products = () => {
     setOpenProductDialog(true);
   };
 
-  const handleSubmit = (values: any) => {
-    // Calculate cost price from current ingredients if not editing
-    let costPrice = 0;
-    if (isEditing && selectedProduct) {
-      costPrice = selectedProduct.costPrice;
-    } else if (productWithDetails?.ingredients) {
-      costPrice = productWithDetails.ingredients.reduce((sum, item) => {
-        if (item.ingredient) {
-          return sum + (item.quantity * item.ingredient.pricePerUnit);
-        }
-        return sum;
-      }, 0);
-    }
+  const handleSubmit = async (values: ProductFormSubmitData) => {
+    const { localIngredients, ...productValues } = values;
 
-    const effectiveSellingPrice = calculateSellingPrice(costPrice, values.markupPercentage);
-    
+    // Calculate cost from local ingredients
+    const costPrice = localIngredients.reduce((sum, item) => {
+      if (item.ingredient) {
+        return sum + (item.quantity * item.ingredient.pricePerUnit);
+      }
+      return sum;
+    }, 0);
+
+    const effectiveSellingPrice = calculateSellingPrice(costPrice, productValues.markupPercentage);
+
     if (isEditing && selectedProduct) {
       updateProduct({
         id: selectedProduct.id,
-        name: values.name,
-        description: values.description,
-        categoryId: values.categoryId,
-        costPrice: costPrice,
+        name: productValues.name,
+        description: productValues.description,
+        categoryId: productValues.categoryId,
+        costPrice,
         sellingPrice: effectiveSellingPrice,
-        stock: values.stock || 0,
-        minOrder: values.minOrder || 1,
+        stock: productValues.stock || 0,
+        minOrder: productValues.minOrder || 1,
       });
+
+      // Handle ingredient changes for editing:
+      // Remove ingredients that were deleted locally
+      const existingIds = (productWithDetails?.ingredients || []).map(i => i.id);
+      const keptDbIds = localIngredients.filter(i => i.dbId).map(i => i.dbId!);
+      const removedIds = existingIds.filter(id => !keptDbIds.includes(id));
+      
+      for (const id of removedIds) {
+        removeIngredient({ id, productId: selectedProduct.id });
+      }
+
+      // Add new ingredients (those without dbId)
+      const newIngredients = localIngredients.filter(i => !i.dbId);
+      for (const item of newIngredients) {
+        addIngredient({
+          productId: selectedProduct.id,
+          ingredientId: item.ingredientId,
+          quantity: item.quantity,
+        });
+      }
     } else {
+      // Create product first, then add ingredients
       createProduct({
-        name: values.name,
-        description: values.description,
-        categoryId: values.categoryId,
-        costPrice: costPrice,
-        sellingPrice: effectiveSellingPrice,
-        stock: values.stock || 0,
-        minOrder: values.minOrder || 1,
+        product: {
+          name: productValues.name,
+          description: productValues.description,
+          categoryId: productValues.categoryId,
+          costPrice,
+          sellingPrice: effectiveSellingPrice,
+          stock: productValues.stock || 0,
+          minOrder: productValues.minOrder || 1,
+        },
+        ingredients: localIngredients.map(i => ({
+          ingredientId: i.ingredientId,
+          quantity: i.quantity,
+        })),
       });
     }
     setOpenProductDialog(false);
@@ -97,31 +121,6 @@ const Products = () => {
   const handleDelete = (id: string) => {
     if (confirm("Are you sure you want to delete this product?")) {
       deleteProduct(id);
-    }
-  };
-
-  const handleAddIngredient = (values: any) => {
-    if (selectedProduct) {
-      console.log("Adding ingredient:", values);
-      // Find the selected ingredient to get its unit price and tasks
-      const selectedIngredient = ingredients.find(
-        (i) => i.id === values.ingredientId
-      );
-
-      if (selectedIngredient) {
-        // Add the ingredient to the product
-        addIngredient({
-          productId: selectedProduct.id,
-          ingredientId: values.ingredientId,
-          quantity: values.quantity,
-        });
-      }
-    }
-  };
-
-  const handleRemoveIngredient = (id: string, productId: string) => {
-    if (confirm("Are you sure you want to remove this ingredient?")) {
-      removeIngredient({ id, productId });
     }
   };
 
@@ -148,7 +147,7 @@ const Products = () => {
         <AppNavbar />
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-2xl font-bold">Products</h1>
-          <p className="text-red-500">Error loading products</p>
+          <p className="text-destructive">Error loading products</p>
         </div>
       </div>
     );
@@ -158,7 +157,6 @@ const Products = () => {
     <div className="min-h-screen bg-background">
       <AppNavbar />
       <div className="container mx-auto px-4 py-8">
-        {/* Header with View Toggle */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Products</h1>
           <div className="flex gap-4">
@@ -186,14 +184,13 @@ const Products = () => {
           </div>
         </div>
 
-        {/* Conditional Rendering of View Mode */}
         {viewMode === "grid" ? (
           <ProductList 
             products={products} 
             onAddNew={handleAddProduct} 
             onEdit={handleEdit}
             onDelete={handleDelete}
-            onViewIngredients={() => {}} // No longer needed, but kept for interface compatibility
+            onViewIngredients={() => {}}
             onViewTasks={handleViewTasks}
           />
         ) : (
@@ -205,7 +202,6 @@ const Products = () => {
           />
         )}
 
-        {/* Product Form Dialog */}
         <Dialog open={openProductDialog} onOpenChange={setOpenProductDialog}>
           <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
             <DialogTitle>
@@ -216,13 +212,10 @@ const Products = () => {
               selectedProduct={selectedProduct}
               productIngredients={productWithDetails?.ingredients || []}
               onSubmit={handleSubmit}
-              onAddIngredient={handleAddIngredient}
-              onRemoveIngredient={handleRemoveIngredient}
             />
           </DialogContent>
         </Dialog>
 
-        {/* Display Task Dialog - read-only view of tasks from ingredients */}
         <Dialog open={openTaskDialog} onOpenChange={setOpenTaskDialog}>
           {selectedProduct && productWithDetails && (
             <TaskDialog
