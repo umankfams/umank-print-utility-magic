@@ -45,13 +45,26 @@ const ingredientSchema = z.object({
 type ProductFormValues = z.infer<typeof productSchema>;
 type IngredientFormValues = z.infer<typeof ingredientSchema>;
 
+// Local ingredient item used during form editing
+export interface LocalIngredientItem {
+  tempId: string; // temporary ID for local state
+  dbId?: string; // actual DB id if already saved
+  ingredientId: string;
+  ingredient?: Ingredient;
+  quantity: number;
+}
+
+export interface ProductFormSubmitData extends ProductFormValues {
+  localIngredients: LocalIngredientItem[];
+}
+
 interface ProductFormProps {
   isEditing: boolean;
   selectedProduct: Product | null;
   productIngredients: ProductIngredient[];
-  onSubmit: (values: ProductFormValues) => void;
-  onAddIngredient: (values: IngredientFormValues) => void;
-  onRemoveIngredient: (id: string, productId: string) => void;
+  onSubmit: (values: ProductFormSubmitData) => void;
+  onAddIngredient?: (values: IngredientFormValues) => void;
+  onRemoveIngredient?: (id: string, productId: string) => void;
 }
 
 export const ProductForm = ({ 
@@ -59,22 +72,30 @@ export const ProductForm = ({
   selectedProduct, 
   productIngredients,
   onSubmit,
-  onAddIngredient,
-  onRemoveIngredient
 }: ProductFormProps) => {
   const [calculatedCostPrice, setCalculatedCostPrice] = useState(0);
   const [calculatedSellingPrice, setCalculatedSellingPrice] = useState(0);
   const [showIngredientForm, setShowIngredientForm] = useState(false);
+  const [localIngredients, setLocalIngredients] = useState<LocalIngredientItem[]>([]);
   
   const { categories, isLoading: categoriesLoading } = useProductCategories();
   const { ingredients } = useIngredients();
 
-  console.log("Categories in ProductForm:", categories);
-  console.log("Categories loading:", categoriesLoading);
-  console.log("Categories length:", categories?.length);
-  console.log("Product ingredients:", productIngredients);
+  // Initialize local ingredients from existing product ingredients when editing
+  useEffect(() => {
+    if (isEditing && productIngredients && productIngredients.length > 0) {
+      setLocalIngredients(productIngredients.map(pi => ({
+        tempId: pi.id,
+        dbId: pi.id,
+        ingredientId: pi.ingredientId,
+        ingredient: pi.ingredient,
+        quantity: pi.quantity,
+      })));
+    } else if (!isEditing) {
+      setLocalIngredients([]);
+    }
+  }, [isEditing, productIngredients]);
 
-  // Calculate initial markup percentage safely
   const getInitialMarkupPercentage = () => {
     if (isEditing && selectedProduct && selectedProduct.costPrice > 0) {
       const markup = Math.round(((selectedProduct.sellingPrice - selectedProduct.costPrice) / selectedProduct.costPrice) * 100);
@@ -103,13 +124,12 @@ export const ProductForm = ({
     },
   });
 
-  // Watch markup percentage changes from the form
   const watchMarkupPercentage = form.watch("markupPercentage");
 
-  // Calculate cost price from ingredients
+  // Calculate cost price from local ingredients
   useEffect(() => {
-    if (productIngredients && productIngredients.length > 0) {
-      const totalCost = productIngredients.reduce((sum, item) => {
+    if (localIngredients.length > 0) {
+      const totalCost = localIngredients.reduce((sum, item) => {
         if (item.ingredient && !isNaN(item.ingredient.pricePerUnit) && !isNaN(item.quantity)) {
           return sum + (item.quantity * item.ingredient.pricePerUnit);
         }
@@ -121,9 +141,8 @@ export const ProductForm = ({
     } else {
       setCalculatedCostPrice(0);
     }
-  }, [productIngredients, selectedProduct, isEditing]);
+  }, [localIngredients, selectedProduct, isEditing]);
 
-  // Update calculated selling price when markup percentage or cost price changes
   useEffect(() => {
     const markup = isNaN(watchMarkupPercentage) ? 30 : watchMarkupPercentage;
     const sellingPrice = calculateSellingPrice(calculatedCostPrice, markup);
@@ -131,18 +150,29 @@ export const ProductForm = ({
   }, [watchMarkupPercentage, calculatedCostPrice]);
 
   const handleFormSubmit = (values: ProductFormValues) => {
-    console.log("Form submitted with values:", values);
-    onSubmit(values);
+    onSubmit({ ...values, localIngredients });
   };
 
-  const handleAddIngredient = (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent form submission
+  const handleAddLocalIngredient = (e: React.FormEvent) => {
+    e.preventDefault();
     ingredientForm.handleSubmit((values) => {
-      console.log("Adding ingredient:", values);
-      onAddIngredient(values);
+      const selectedIngredient = ingredients.find(i => i.id === values.ingredientId);
+      if (!selectedIngredient) return;
+
+      const newItem: LocalIngredientItem = {
+        tempId: `temp-${Date.now()}`,
+        ingredientId: values.ingredientId,
+        ingredient: selectedIngredient,
+        quantity: values.quantity,
+      };
+      setLocalIngredients(prev => [...prev, newItem]);
       ingredientForm.reset();
       setShowIngredientForm(false);
     })(e);
+  };
+
+  const handleRemoveLocalIngredient = (tempId: string) => {
+    setLocalIngredients(prev => prev.filter(i => i.tempId !== tempId));
   };
 
   return (
@@ -197,7 +227,7 @@ export const ProductForm = ({
                     ) : (
                       categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
-                          {category.label}
+                          {category.label || category.name}
                         </SelectItem>
                       ))
                     )}
@@ -222,9 +252,7 @@ export const ProductForm = ({
                       {...field}
                       onChange={(e) =>
                         field.onChange(
-                          e.target.value === ""
-                            ? 0
-                            : parseFloat(e.target.value)
+                          e.target.value === "" ? 0 : parseFloat(e.target.value)
                         )
                       }
                     />
@@ -247,9 +275,7 @@ export const ProductForm = ({
                       {...field}
                       onChange={(e) =>
                         field.onChange(
-                          e.target.value === ""
-                            ? 1
-                            : parseInt(e.target.value)
+                          e.target.value === "" ? 1 : parseInt(e.target.value)
                         )
                       }
                     />
@@ -325,9 +351,7 @@ export const ProductForm = ({
                               {...field}
                               onChange={(e) =>
                                 field.onChange(
-                                  e.target.value === ""
-                                    ? 0
-                                    : parseFloat(e.target.value)
+                                  e.target.value === "" ? 0 : parseFloat(e.target.value)
                                 )
                               }
                             />
@@ -339,7 +363,7 @@ export const ProductForm = ({
                   </div>
 
                   <div className="flex gap-2">
-                    <Button type="button" size="sm" onClick={handleAddIngredient}>Add Ingredient</Button>
+                    <Button type="button" size="sm" onClick={handleAddLocalIngredient}>Add Ingredient</Button>
                     <Button type="button" variant="outline" size="sm" onClick={() => setShowIngredientForm(false)}>
                       Cancel
                     </Button>
@@ -349,10 +373,10 @@ export const ProductForm = ({
             )}
 
             {/* Ingredients List */}
-            {productIngredients && productIngredients.length > 0 ? (
+            {localIngredients.length > 0 ? (
               <div className="border rounded-md divide-y">
-                {productIngredients.map((item) => (
-                  <div key={item.id} className="p-3 flex justify-between items-center">
+                {localIngredients.map((item) => (
+                  <div key={item.tempId} className="p-3 flex justify-between items-center">
                     <div>
                       <p className="font-medium">{item.ingredient?.name || 'Unknown Ingredient'}</p>
                       <p className="text-sm text-muted-foreground">
@@ -363,7 +387,7 @@ export const ProductForm = ({
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => selectedProduct && onRemoveIngredient(item.id, selectedProduct.id)}
+                      onClick={() => handleRemoveLocalIngredient(item.tempId)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

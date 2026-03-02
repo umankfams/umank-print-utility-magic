@@ -400,8 +400,27 @@ export function useProducts() {
     enabled: !!id
   });
 
+  const createProductWithIngredients = async ({
+    product,
+    ingredients: ingredientItems,
+  }: {
+    product: Omit<Product, "id" | "createdAt" | "updatedAt">;
+    ingredients: { ingredientId: string; quantity: number }[];
+  }) => {
+    const created = await createProduct(product);
+    // Add ingredients after product is created
+    for (const item of ingredientItems) {
+      await addIngredientToProduct({
+        productId: created.id,
+        ingredientId: item.ingredientId,
+        quantity: item.quantity,
+      });
+    }
+    return created;
+  };
+
   const createProductMutation = useMutation({
-    mutationFn: createProduct,
+    mutationFn: createProductWithIngredients,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       toast({
