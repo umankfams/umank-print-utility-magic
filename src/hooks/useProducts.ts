@@ -164,7 +164,7 @@ export function useProducts() {
         selling_price: product.sellingPrice,
         stock: product.stock,
         min_order: product.minOrder,
-        category_id: product.categoryId,
+        category_id: product.categoryId || null,
         branch_id: product.branchId
       })
       .select()
@@ -200,7 +200,7 @@ export function useProducts() {
         selling_price: product.sellingPrice,
         stock: product.stock,
         min_order: product.minOrder,
-        category_id: product.categoryId,
+        category_id: product.categoryId || null,
         branch_id: product.branchId,
         updated_at: new Date().toISOString()
       })
