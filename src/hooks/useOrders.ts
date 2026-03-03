@@ -405,22 +405,57 @@ export function useOrders() {
   // Helper function to create tasks from a product's task templates
   const createTasksFromProduct = async (orderId: string, productId: string): Promise<void> => {
     // Get task templates for this product
-    const { data: templates, error: templatesError } = await supabase
+    const { data: productTemplates, error: templatesError } = await supabase
       .from("task_templates")
       .select("*")
       .eq("product_id", productId)
-      .eq("is_subtask", false); // Get only parent tasks
+      .eq("is_subtask", false);
 
     if (templatesError) {
       console.error("Error fetching product task templates:", templatesError);
       throw new Error(templatesError.message);
     }
 
+    // Get ingredient IDs for this product
+    const { data: productIngredients, error: ingredientsError } = await supabase
+      .from("product_ingredients")
+      .select("ingredient_id")
+      .eq("product_id", productId);
+
+    if (ingredientsError) {
+      console.error("Error fetching product ingredients:", ingredientsError);
+      throw new Error(ingredientsError.message);
+    }
+
+    // Get task templates from ingredients
+    let ingredientTemplates: any[] = [];
+    if (productIngredients && productIngredients.length > 0) {
+      const ingredientIds = productIngredients.map(pi => pi.ingredient_id);
+      const { data: ingTemplates, error: ingTemplatesError } = await supabase
+        .from("task_templates")
+        .select("*")
+        .in("ingredient_id", ingredientIds)
+        .eq("is_subtask", false);
+
+      if (ingTemplatesError) {
+        console.error("Error fetching ingredient task templates:", ingTemplatesError);
+        throw new Error(ingTemplatesError.message);
+      }
+      ingredientTemplates = ingTemplates || [];
+    }
+
+    // Combine and deduplicate templates
+    const allTemplates = [...(productTemplates || [])];
+    for (const t of ingredientTemplates) {
+      if (!allTemplates.find(existing => existing.id === t.id)) {
+        allTemplates.push(t);
+      }
+    }
+
     // Create parent tasks and map their IDs
     const templateTaskMap: Record<string, string> = {};
     
-    for (const template of templates) {
-      // Create parent task
+    for (const template of allTemplates) {
       const { data: taskData, error: taskError } = await supabase
         .from("tasks")
         .insert({
@@ -441,7 +476,6 @@ export function useOrders() {
         throw new Error(taskError.message);
       }
 
-      // Store the mapping between template ID and new task ID
       templateTaskMap[template.id] = taskData.id;
 
       // Get subtasks for this template
@@ -455,7 +489,6 @@ export function useOrders() {
         throw new Error(subtemplatesError.message);
       }
 
-      // Create subtasks
       for (const subtemplate of subtemplates) {
         await supabase
           .from("tasks")
