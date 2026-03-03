@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Search, TrendingUp, TrendingDown, DollarSign, Settings } from "lucide-react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { formatCurrency } from "@/lib/utils";
-import Header from "@/components/Header";
+
 import TransactionDialog from "@/components/finance/TransactionDialog";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -111,8 +111,8 @@ const Finance = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
+    <div className="bg-background">
+
       
       <div className="container mx-auto px-6 py-8">
         {/* Header */}

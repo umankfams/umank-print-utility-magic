@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useTitle } from "@/hooks/useTitle";
-import AppNavbar from "@/components/AppNavbar";
+
 import { useTasks } from "@/hooks/useTasks";
 import { KanbanBoard } from "@/components/tasks/KanbanBoard";
 import { Task, TaskStatus } from "@/types";
@@ -90,8 +90,8 @@ const Todo = () => {
   };
   
   return (
-    <div className="min-h-screen bg-background">
-      <AppNavbar />
+    <div className="bg-background">
+
       
       <div className="container mx-auto px-4 py-6">
         <div className="mb-6">

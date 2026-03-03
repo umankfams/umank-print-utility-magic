@@ -1,7 +1,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import AppNavbar from "@/components/AppNavbar";
 import { useProducts } from "@/hooks/useProducts";
 import { useOrders } from "@/hooks/useOrders";
 import { useIngredients } from "@/hooks/useIngredients";
@@ -20,8 +19,7 @@ const Index = () => {
   const lowStockProducts = products?.filter(product => product.stock < 5).length || 0;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <AppNavbar />
+    <div className="bg-background flex flex-col flex-grow">
       <main className="container mx-auto px-4 py-6 flex-grow">
         <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
         
