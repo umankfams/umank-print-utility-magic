@@ -38,7 +38,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Textarea } from "@/components/ui/textarea";
-import AppNavbar from "@/components/AppNavbar";
+
 import { useIngredients } from "@/hooks/useIngredients";
 import { Ingredient, TaskTemplate, IngredientUnit, TaskPriority } from "@/types";
 import { Plus, EditIcon, TrashIcon, Grid2x2, LayoutList } from "lucide-react";
@@ -211,7 +211,7 @@ const Ingredients = () => {
   if (isLoading) {
     return (
       <div>
-        <AppNavbar />
+
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-2xl font-bold">Ingredients</h1>
           <p>Loading...</p>
@@ -223,7 +223,7 @@ const Ingredients = () => {
   if (error) {
     return (
       <div>
-        <AppNavbar />
+
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-2xl font-bold">Ingredients</h1>
           <p className="text-red-500">Error loading ingredients</p>
@@ -235,8 +235,8 @@ const Ingredients = () => {
   const unitOptions: IngredientUnit[] = ["kg", "g", "l", "ml", "piece", "box", "batch"];
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppNavbar />
+    <div className="bg-background">
+
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Ingredients</h1>

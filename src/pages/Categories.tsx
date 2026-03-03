@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import AppNavbar from "@/components/AppNavbar";
+
 import { useProductCategories } from "@/hooks/useProductCategories";
 import { CategoryCard } from "@/components/categories/CategoryCard";
 import { CategoryForm } from "@/components/categories/CategoryForm";
@@ -16,7 +16,6 @@ const Categories = () => {
   if (isLoading) {
     return (
       <div>
-        <AppNavbar />
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-2xl font-bold">Kategori Produk</h1>
           <p>Memuat...</p>
@@ -28,7 +27,6 @@ const Categories = () => {
   if (error) {
     return (
       <div>
-        <AppNavbar />
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-2xl font-bold">Kategori Produk</h1>
           <p className="text-red-500">Gagal memuat kategori</p>
@@ -62,8 +60,8 @@ const Categories = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppNavbar />
+    <div className="bg-background">
+
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <div>

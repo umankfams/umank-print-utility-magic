@@ -43,7 +43,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/components/ui/use-toast";
-import AppNavbar from "@/components/AppNavbar";
+
 
 const customerSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -158,7 +158,7 @@ const Customers = () => {
   if (isLoading) {
     return (
       <div>
-        <AppNavbar />
+
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-2xl font-bold">Customers</h1>
           <p>Loading...</p>
@@ -170,7 +170,7 @@ const Customers = () => {
   if (error) {
     return (
       <div>
-        <AppNavbar />
+
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-2xl font-bold">Customers</h1>
           <p className="text-red-500">Error loading customers</p>
@@ -180,8 +180,8 @@ const Customers = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppNavbar />
+    <div className="bg-background">
+
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Customers</h1>

@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import AppNavbar from "@/components/AppNavbar";
+
 import { useOrders } from "@/hooks/useOrders";
 import { useProducts } from "@/hooks/useProducts";
 import { useCustomers } from "@/hooks/useCustomers";
@@ -270,7 +270,7 @@ const Orders = () => {
   if (isLoading) {
     return (
       <div>
-        <AppNavbar />
+
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-2xl font-bold">Orders</h1>
           <p>Loading...</p>
@@ -282,7 +282,7 @@ const Orders = () => {
   if (error) {
     return (
       <div>
-        <AppNavbar />
+
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-2xl font-bold">Orders</h1>
           <p className="text-red-500">Error loading orders</p>
@@ -300,8 +300,8 @@ const Orders = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppNavbar />
+    <div className="bg-background">
+
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <h1 className="text-2xl font-bold">Orders</h1>

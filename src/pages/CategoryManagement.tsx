@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import AppNavbar from "@/components/AppNavbar";
+
 import { useCategories } from "@/hooks/useCategories";
 import { CategoryManagementCard } from "@/components/categories/CategoryManagementCard";
 import { CategoryManagementForm } from "@/components/categories/CategoryManagementForm";
@@ -17,7 +17,6 @@ const CategoryManagement = () => {
   if (isLoading) {
     return (
       <div>
-        <AppNavbar />
         <div className="min-h-screen bg-teal-500">
           <div className="container mx-auto px-4 py-8">
             <div className="flex justify-between items-center mb-6">
@@ -33,7 +32,6 @@ const CategoryManagement = () => {
   if (error) {
     return (
       <div>
-        <AppNavbar />
         <div className="min-h-screen bg-teal-500">
           <div className="container mx-auto px-4 py-8">
             <div className="flex justify-between items-center mb-6">
@@ -78,8 +76,8 @@ const CategoryManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AppNavbar />
+    <div className="bg-muted">
+
       <div className="min-h-screen bg-teal-500">
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-8">
