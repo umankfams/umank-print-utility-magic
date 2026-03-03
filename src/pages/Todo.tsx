@@ -37,7 +37,7 @@ const Todo = () => {
     createTask,
     deleteTask,
     error
-  } = useTasks("processing");
+  } = useTasks(["pending", "processing"]);
   
   // Log information for debugging
   console.log("Tasks:", tasks);
@@ -99,7 +99,7 @@ const Todo = () => {
           <p className="text-muted-foreground">
             {orderId 
               ? "Manage tasks for this order" 
-              : "Manage tasks from all processing orders"}
+              : "Manage tasks from all active orders"}
           </p>
         </div>
         
@@ -156,7 +156,7 @@ const Todo = () => {
           </div>
         ) : tasks.length === 0 ? (
           <div className="text-center p-8 border rounded-md bg-muted/20">
-            <p className="text-muted-foreground mb-2">No tasks found for processing orders</p>
+            <p className="text-muted-foreground mb-2">No tasks found for active orders</p>
             <Button 
               variant="outline" 
               onClick={() => window.location.reload()}

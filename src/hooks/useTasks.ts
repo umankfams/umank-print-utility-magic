@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Task, TaskStatus, TaskPriority, TaskType } from "@/types";
 import { toast } from "@/hooks/use-toast";
 
-export function useTasks(orderStatus?: string) {
+export function useTasks(orderStatus?: string | string[]) {
   const queryClient = useQueryClient();
 
   // Fetch tasks
@@ -19,10 +19,11 @@ export function useTasks(orderStatus?: string) {
 
     // If orderStatus is provided, filter tasks by orders with that status
     if (orderStatus) {
+      const statuses = Array.isArray(orderStatus) ? orderStatus : [orderStatus];
       const { data: orderIds, error: orderError } = await supabase
         .from("orders")
         .select("id")
-        .eq("status", orderStatus);
+        .in("status", statuses);
 
       if (orderError) {
         console.error("Error fetching orders:", orderError);
@@ -33,7 +34,6 @@ export function useTasks(orderStatus?: string) {
         const ids = orderIds.map(order => order.id);
         query = query.in("order_id", ids);
       } else {
-        // If no orders with the specified status, return empty array
         return [];
       }
     }
@@ -46,12 +46,13 @@ export function useTasks(orderStatus?: string) {
     }
 
     // If no tasks found, attempt to create them from order products
-    if (data && data.length === 0 && orderStatus === 'processing') {
-      console.log("No tasks found for processing orders, attempting to create them");
+    if (data && data.length === 0 && orderStatus) {
+      const statuses2 = Array.isArray(orderStatus) ? orderStatus : [orderStatus];
+      console.log("No tasks found for active orders, attempting to create them");
       const { data: orderIds } = await supabase
         .from("orders")
         .select("id")
-        .eq("status", orderStatus);
+        .in("status", statuses2);
         
       if (orderIds && orderIds.length > 0) {
         for (const order of orderIds) {
