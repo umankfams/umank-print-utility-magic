@@ -80,6 +80,12 @@ export const TaskCard = ({ task, onDelete, onEdit, isDragging = false }: TaskCar
         )}
         
         <div className="flex flex-wrap gap-1">
+          {task.orderId && (
+            <Badge variant="outline" className="text-xs font-mono bg-primary/5">
+              #{task.orderId.substring(0, 6).toUpperCase()}
+            </Badge>
+          )}
+          
           {task.priority && (
             <Badge variant={getPriorityColor(task.priority as TaskPriority)}>
               {task.priority}
