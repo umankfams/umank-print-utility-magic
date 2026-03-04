@@ -68,7 +68,7 @@ const Todo = () => {
           task.title.toLowerCase().includes(lowercaseQuery) ||
           (task.description?.toLowerCase() || '').includes(lowercaseQuery) ||
           (task.productName?.toLowerCase() || '').includes(lowercaseQuery) ||
-          (task.ingredientName?.toLowerCase() || '').includes(lowercaseQuery)
+          (task.customerName?.toLowerCase() || '').includes(lowercaseQuery)
         );
       }
       

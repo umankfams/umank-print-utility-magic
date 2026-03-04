@@ -70,8 +70,8 @@ export interface Task {
   assigneeId?: string;
   createdAt: Date;
   updatedAt: Date;
-  productName?: string;
-  ingredientName?: string;
+      productName?: string;
+      customerName?: string;
 }
 
 export interface ProductIngredient {
