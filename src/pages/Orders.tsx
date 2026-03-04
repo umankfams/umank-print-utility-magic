@@ -40,6 +40,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useCustomers } from "@/hooks/useCustomers";
 import { Order, OrderStatus, Product } from "@/types";
 import { Plus, TrashIcon, EditIcon, ShoppingCartIcon, Filter } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -529,7 +530,7 @@ const Orders = () => {
                     )}
                     <div>
                       <span className="font-medium">Total Amount:</span>{" "}
-                      ${order.totalAmount.toFixed(2)}
+                      {formatCurrency(order.totalAmount)}
                     </div>
                   </div>
                   
@@ -577,9 +578,9 @@ const Orders = () => {
                                 <TableRow key={item.id}>
                                   <TableCell>{item.product?.name || 'Unknown Product'}</TableCell>
                                   <TableCell>{item.quantity}</TableCell>
-                                  <TableCell>${item.price.toFixed(2)}</TableCell>
+                                  <TableCell>{formatCurrency(item.price)}</TableCell>
                                   <TableCell>
-                                    ${(item.price * item.quantity).toFixed(2)}
+                                    {formatCurrency(item.price * item.quantity)}
                                   </TableCell>
                                   <TableCell>
                                     <Button
@@ -606,7 +607,7 @@ const Orders = () => {
                           <div className="text-right">
                             <p className="text-sm text-muted-foreground">Total Amount</p>
                             <p className="text-lg font-medium">
-                              ${orderWithItems?.totalAmount.toFixed(2)}
+                              {formatCurrency(orderWithItems?.totalAmount ?? 0)}
                             </p>
                           </div>
                         </div>
@@ -662,7 +663,7 @@ const Orders = () => {
                         <option value="">Select a product</option>
                         {products.map((product) => (
                           <option key={product.id} value={product.id}>
-                            {product.name} (${product.sellingPrice.toFixed(2)})
+                            {product.name} ({formatCurrency(product.sellingPrice)})
                           </option>
                         ))}
                       </select>
@@ -713,11 +714,11 @@ const Orders = () => {
                       <div className="text-sm space-y-1">
                         <div className="flex justify-between">
                           <span>Price per unit:</span>
-                          <span>${selectedProduct.sellingPrice.toFixed(2)}</span>
+                          <span>{formatCurrency(selectedProduct.sellingPrice)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Total price:</span>
-                          <span>${totalPrice.toFixed(2)}</span>
+                          <span>{formatCurrency(totalPrice)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Stock available:</span>
@@ -771,7 +772,7 @@ const Orders = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-muted-foreground">
-                            ${productDetails?.sellingPrice.toFixed(2)} each
+                            {formatCurrency(productDetails?.sellingPrice ?? 0)} each
                           </span>
                           <Input
                             type="number"
@@ -817,7 +818,7 @@ const Orders = () => {
                             {product.name}
                           </label>
                           <p className="text-xs text-muted-foreground">
-                            ${product.sellingPrice.toFixed(2)} · Stock: {product.stock} {product.stock === 1 ? 'unit' : 'units'}
+                            {formatCurrency(product.sellingPrice)} · Stok: {product.stock} {product.stock === 1 ? 'unit' : 'units'}
                           </p>
                         </div>
                       </div>
