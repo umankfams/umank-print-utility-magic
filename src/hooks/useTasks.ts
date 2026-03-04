@@ -14,7 +14,7 @@ export function useTasks(orderStatus?: string | string[]) {
       .select(`
         *,
         products:product_id (name),
-        ingredients:ingredient_id (name)
+        orders:order_id (customer_id, customers:customer_id (name))
       `);
 
     // If orderStatus is provided, filter tasks by orders with that status
@@ -92,7 +92,7 @@ export function useTasks(orderStatus?: string | string[]) {
       createdAt: new Date(item.created_at),
       updatedAt: new Date(item.updated_at),
       productName: item.products?.name,
-      ingredientName: item.ingredients?.name
+      customerName: item.orders?.customers?.name
     }));
   };
 

@@ -98,9 +98,9 @@ export const TaskCard = ({ task, onDelete, onEdit, isDragging = false }: TaskCar
             </Badge>
           )}
           
-          {task.ingredientName && (
+          {task.customerName && (
             <Badge variant="outline" className="text-xs bg-background/50">
-              {task.ingredientName}
+              {task.customerName}
             </Badge>
           )}
         </div>
