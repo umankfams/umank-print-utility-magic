@@ -8,6 +8,8 @@ import {
   Users,
   DollarSign,
   History,
+  Printer,
+  Settings,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -34,7 +36,9 @@ const navItems = [
   { name: "Keuangan", path: "/finance", icon: DollarSign },
   { name: "Tugas", path: "/todo", icon: ListTodo },
   { name: "Kategori", path: "/categories", icon: ClipboardListIcon },
+  { name: "Cetak", path: "/print", icon: Printer },
   { name: "Riwayat Cetak", path: "/history", icon: History },
+  { name: "Pengaturan", path: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
