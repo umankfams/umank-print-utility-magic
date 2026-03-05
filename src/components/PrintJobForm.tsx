@@ -12,7 +12,7 @@ import { PrintJobStatus } from "@/types";
 import { usePrintJobs } from "@/hooks/usePrintJobs";
 import CloudDriveSelector from "./CloudDriveSelector";
 
-const PrintJobForm = () => {
+const PrintJobForm = ({ onSuccess }: { onSuccess?: () => void }) => {
   const { toast } = useToast();
   const { createPrintJob } = usePrintJobs();
   const [jobName, setJobName] = useState("");
@@ -75,17 +75,11 @@ const PrintJobForm = () => {
     
     createPrintJob(newJob);
     resetForm();
+    onSuccess?.();
   };
   
   return (
-    <Card className="w-full mt-6 animate-fade-in">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Printer className="text-primary" size={20} />
-          New Print Job
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-4 animate-fade-in">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="jobName">Job Name (Optional)</Label>
@@ -219,12 +213,11 @@ const PrintJobForm = () => {
             </div>
           </div>
         </form>
-      </CardContent>
-      <CardFooter className="flex justify-end space-x-2">
-        <Button variant="outline" onClick={resetForm}>Cancel</Button>
-        <Button onClick={handleSubmit}>Print Document</Button>
-      </CardFooter>
-    </Card>
+        <div className="flex justify-end space-x-2 pt-4">
+          <Button variant="outline" onClick={resetForm}>Cancel</Button>
+          <Button onClick={handleSubmit}>Print Document</Button>
+        </div>
+      </div>
   );
 };
 
