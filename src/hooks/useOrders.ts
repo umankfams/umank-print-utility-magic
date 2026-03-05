@@ -245,16 +245,47 @@ export function useOrders() {
   };
 
   const addItemToOrder = async (item: Omit<OrderItem, "id" | "createdAt" | "updatedAt">): Promise<OrderItem> => {
-    const { data, error } = await supabase
+    // Check if the same product already exists in this order
+    const { data: existingItem } = await supabase
       .from("order_items")
-      .insert({
-        order_id: item.orderId,
-        product_id: item.productId,
-        price: item.price,
-        quantity: item.quantity
-      })
-      .select()
-      .single();
+      .select("*")
+      .eq("order_id", item.orderId)
+      .eq("product_id", item.productId)
+      .maybeSingle();
+
+    let data;
+    let error;
+
+    if (existingItem) {
+      // Update quantity of existing item
+      const newQuantity = Number(existingItem.quantity) + item.quantity;
+      const result = await supabase
+        .from("order_items")
+        .update({
+          quantity: newQuantity,
+          price: item.price,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", existingItem.id)
+        .select()
+        .single();
+      data = result.data;
+      error = result.error;
+    } else {
+      // Insert new item
+      const result = await supabase
+        .from("order_items")
+        .insert({
+          order_id: item.orderId,
+          product_id: item.productId,
+          price: item.price,
+          quantity: item.quantity
+        })
+        .select()
+        .single();
+      data = result.data;
+      error = result.error;
+    }
 
     if (error) {
       console.error("Error adding item to order:", error);
