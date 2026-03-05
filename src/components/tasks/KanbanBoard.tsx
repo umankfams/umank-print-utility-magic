@@ -16,11 +16,11 @@ interface KanbanBoardProps {
   orderId?: string;
 }
 
-const columns: { id: TaskStatus; title: string }[] = [
-  { id: "todo", title: "To Do" },
-  { id: "in-progress", title: "In Progress" },
-  { id: "completed", title: "Completed" },
-  { id: "cancelled", title: "Cancelled" }
+const columns: { id: TaskStatus; title: string; color: string; dot: string; bg: string; dropBg: string }[] = [
+  { id: "todo", title: "To Do", color: "border-t-violet-500", dot: "bg-violet-500", bg: "bg-violet-50 dark:bg-violet-950/30", dropBg: "bg-violet-100/50 dark:bg-violet-900/20" },
+  { id: "in-progress", title: "In Progress", color: "border-t-amber-500", dot: "bg-amber-500", bg: "bg-amber-50 dark:bg-amber-950/30", dropBg: "bg-amber-100/50 dark:bg-amber-900/20" },
+  { id: "completed", title: "Completed", color: "border-t-emerald-500", dot: "bg-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-950/30", dropBg: "bg-emerald-100/50 dark:bg-emerald-900/20" },
+  { id: "cancelled", title: "Cancelled", color: "border-t-rose-500", dot: "bg-rose-500", bg: "bg-rose-50 dark:bg-rose-950/30", dropBg: "bg-rose-100/50 dark:bg-rose-900/20" }
 ];
 
 export const KanbanBoard = ({ 
@@ -85,13 +85,18 @@ export const KanbanBoard = ({
       </div>
       
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 h-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 h-full">
           {columns.map((column) => (
             <div key={column.id} className="flex flex-col h-full">
-              <div className="bg-muted p-3 rounded-t-md mb-2">
-                <h3 className="font-medium text-sm">{column.title}</h3>
-                <div className="text-xs text-muted-foreground mt-1">
-                  {tasks[column.id].length} {tasks[column.id].length === 1 ? "task" : "tasks"}
+              <div className={`border-t-[3px] ${column.color} rounded-t-lg p-3 ${column.bg} backdrop-blur-sm`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2.5 w-2.5 rounded-full ${column.dot}`} />
+                    <h3 className="font-semibold text-sm uppercase tracking-wide">{column.title}</h3>
+                  </div>
+                  <span className="text-xs font-medium bg-background/70 rounded-full px-2 py-0.5 text-muted-foreground">
+                    {tasks[column.id].length}
+                  </span>
                 </div>
               </div>
               
@@ -100,8 +105,8 @@ export const KanbanBoard = ({
                   <div
                     {...provided.droppableProps}
                     ref={provided.innerRef}
-                    className={`bg-muted/30 p-2 rounded-b-md flex-grow overflow-y-auto max-h-[600px] ${
-                      snapshot.isDraggingOver ? "bg-muted/50" : ""
+                    className={`rounded-b-lg p-2 flex-grow overflow-y-auto max-h-[600px] transition-colors border border-t-0 border-border/50 ${
+                      snapshot.isDraggingOver ? column.dropBg : "bg-muted/20"
                     }`}
                   >
                     {tasks[column.id].map((task, index) => (

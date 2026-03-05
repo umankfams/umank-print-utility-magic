@@ -15,7 +15,8 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, CheckCircle2, Clock, ListTodo } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 const Todo = () => {
   useTitle("Todo | Product Management");
@@ -146,6 +147,33 @@ const Todo = () => {
           <div className="mb-6 p-4 border border-destructive/50 bg-destructive/10 rounded-md text-destructive">
             <p className="font-medium">Error loading tasks</p>
             <p className="text-sm">{error.message}</p>
+          </div>
+        )}
+        
+        {/* Progress Summary */}
+        {!isLoading && tasks.length > 0 && (
+          <div className="mb-6 rounded-lg border bg-card p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Progress</span>
+              <span className="text-sm font-semibold">
+                {Math.round((groupedTasks?.completed?.length || 0) / tasks.length * 100)}%
+              </span>
+            </div>
+            <Progress value={(groupedTasks?.completed?.length || 0) / tasks.length * 100} className="h-2 mb-3" />
+            <div className="flex gap-6 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <ListTodo className="h-3.5 w-3.5" />
+                <span>{tasks.length} Tasks</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                <span>{groupedTasks?.completed?.length || 0} Done</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-amber-500" />
+                <span>{(groupedTasks?.['in-progress']?.length || 0)} In Progress</span>
+              </div>
+            </div>
           </div>
         )}
         
