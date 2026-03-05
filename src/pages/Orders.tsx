@@ -41,6 +41,7 @@ import { useCustomers } from "@/hooks/useCustomers";
 import { Order, OrderStatus, Product } from "@/types";
 import { Plus, TrashIcon, EditIcon, ShoppingCartIcon, Filter } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -129,23 +130,40 @@ const Orders = () => {
 
   const handleProductSelection = (productId: string, isSelected: boolean) => {
     if (isSelected) {
-      setSelectedProducts([...selectedProducts, { id: productId, quantity: 1 }]);
+      const product = products.find(p => p.id === productId);
+      const minQty = product?.minOrder || 1;
+      setSelectedProducts([...selectedProducts, { id: productId, quantity: minQty }]);
     } else {
       setSelectedProducts(selectedProducts.filter(p => p.id !== productId));
     }
   };
 
   const handleProductQuantityChange = (productId: string, quantity: number) => {
+    const product = products.find(p => p.id === productId);
+    const minQty = product?.minOrder || 1;
+    const validQty = Math.max(quantity, minQty);
     setSelectedProducts(
-      selectedProducts.map(product => 
-        product.id === productId ? { ...product, quantity } : product
+      selectedProducts.map(p => 
+        p.id === productId ? { ...p, quantity: validQty } : p
       )
     );
   };
 
   const addSelectedProductsToOrder = () => {
     if (selectedOrder && selectedProducts.length > 0) {
-      // Find product details for each selected product
+      // Validate min order for all selected products
+      for (const sp of selectedProducts) {
+        const product = products.find(p => p.id === sp.id);
+        if (product && sp.quantity < product.minOrder) {
+          toast({
+            title: "Jumlah tidak valid",
+            description: `${product.name} memiliki minimum order ${product.minOrder}`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
       selectedProducts.forEach(selectedProduct => {
         const productDetails = products.find(p => p.id === selectedProduct.id);
         
@@ -159,7 +177,6 @@ const Orders = () => {
         }
       });
 
-      // Reset selected products and close dialog
       setSelectedProducts([]);
       setOpenProductSelectionDialog(false);
     }
@@ -191,12 +208,20 @@ const Orders = () => {
 
   const onSubmitItem = (values: OrderItemFormValues) => {
     if (selectedOrder) {
-      // Find the selected product to get its price
       const selectedProduct = products.find(
         (p) => p.id === values.productId
       );
 
       if (selectedProduct) {
+        if (values.quantity < selectedProduct.minOrder) {
+          toast({
+            title: "Jumlah tidak valid",
+            description: `${selectedProduct.name} memiliki minimum order ${selectedProduct.minOrder}`,
+            variant: "destructive",
+          });
+          return;
+        }
+
         addItem({
           orderId: selectedOrder.id,
           productId: values.productId,
@@ -721,11 +746,20 @@ const Orders = () => {
                           <span>{formatCurrency(totalPrice)}</span>
                         </div>
                         <div className="flex justify-between">
+                          <span>Min. order:</span>
+                          <span>{selectedProduct.minOrder}</span>
+                        </div>
+                        <div className="flex justify-between">
                           <span>Stock available:</span>
                           <span>
                             {selectedProduct.stock} {selectedProduct.stock === 1 ? "unit" : "units"}
                           </span>
                         </div>
+                        {quantity < selectedProduct.minOrder && (
+                          <p className="text-destructive text-xs mt-1">
+                            Minimum order untuk produk ini adalah {selectedProduct.minOrder}
+                          </p>
+                        )}
                       </div>
                     );
                   })()}
@@ -777,7 +811,7 @@ const Orders = () => {
                           <Input
                             type="number"
                             className="w-16 h-8"
-                            min={1}
+                            min={productDetails?.minOrder || 1}
                             value={selectedProduct.quantity}
                             onChange={(e) => 
                               handleProductQuantityChange(
@@ -818,7 +852,7 @@ const Orders = () => {
                             {product.name}
                           </label>
                           <p className="text-xs text-muted-foreground">
-                            {formatCurrency(product.sellingPrice)} · Stok: {product.stock} {product.stock === 1 ? 'unit' : 'units'}
+                            {formatCurrency(product.sellingPrice)} · Min: {product.minOrder} · Stok: {product.stock} {product.stock === 1 ? 'unit' : 'units'}
                           </p>
                         </div>
                       </div>
@@ -827,7 +861,7 @@ const Orders = () => {
                         <Input
                           type="number"
                           className="w-16 h-8"
-                          min={1}
+                          min={product.minOrder || 1}
                           max={product.stock}
                           value={getProductQuantity(product.id)}
                           onChange={(e) => 
