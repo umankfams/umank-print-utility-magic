@@ -26,29 +26,6 @@ export const ProductList = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setViewMode('grid')}
-            className={viewMode === 'grid' ? "bg-muted" : ""}
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setViewMode('table')}
-            className={`ml-2 ${viewMode === 'table' ? "bg-muted" : ""}`}
-          >
-            <TableIcon className="h-4 w-4" />
-          </Button>
-        </div>
-        <Button onClick={onAddNew}>
-          <Plus className="mr-2 h-4 w-4" /> Tambah Produk
-        </Button>
-      </div>
 
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
