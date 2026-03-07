@@ -214,6 +214,36 @@ export type Database = {
           },
         ]
       }
+      partners: {
+        Row: {
+          company_name: string
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_name: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       print_jobs: {
         Row: {
           color: boolean

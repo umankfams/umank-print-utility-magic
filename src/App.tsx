@@ -17,6 +17,7 @@ import Categories from "./pages/Categories";
 import Finance from "./pages/Finance";
 import NotFound from "./pages/NotFound";
 import CategoryManagement from "./pages/CategoryManagement";
+import Partners from "./pages/Partners";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/categories" element={<Categories />} />
             <Route path="/category-management" element={<CategoryManagement />} />
             <Route path="/finance" element={<Finance />} />
+            <Route path="/partners" element={<Partners />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
