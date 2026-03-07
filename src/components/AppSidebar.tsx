@@ -35,6 +35,7 @@ const navItems = [
   { name: "Pesanan", path: "/orders", icon: ShoppingCartIcon },
   { name: "Pelanggan", path: "/customers", icon: Users },
   { name: "Keuangan", path: "/finance", icon: DollarSign },
+  { name: "Mitra", path: "/partners", icon: Handshake },
   { name: "Tugas", path: "/todo", icon: ListTodo },
   { name: "Kategori", path: "/categories", icon: ClipboardListIcon },
   { name: "Cetak", path: "/print", icon: Printer },

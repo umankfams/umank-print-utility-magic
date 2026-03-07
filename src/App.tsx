@@ -41,6 +41,7 @@ const App = () => (
             <Route path="/categories" element={<Categories />} />
             <Route path="/category-management" element={<CategoryManagement />} />
             <Route path="/finance" element={<Finance />} />
+            <Route path="/partners" element={<Partners />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
