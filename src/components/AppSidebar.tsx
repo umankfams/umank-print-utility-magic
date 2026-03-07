@@ -6,6 +6,7 @@ import {
   Package,
   ListTodo,
   Users,
+  Handshake,
   DollarSign,
   History,
   Printer,
