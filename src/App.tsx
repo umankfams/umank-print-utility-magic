@@ -17,6 +17,7 @@ import Categories from "./pages/Categories";
 import Finance from "./pages/Finance";
 import NotFound from "./pages/NotFound";
 import CategoryManagement from "./pages/CategoryManagement";
+import Partners from "./pages/Partners";
 
 const queryClient = new QueryClient();
 
